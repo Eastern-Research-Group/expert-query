@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE attains_eq.profile_assessment_units(
+CREATE OR REPLACE PROCEDURE attains_eq.profile_actions(
     p_offset                  IN  VARCHAR2 DEFAULT NULL
    ,p_limit                   IN  VARCHAR2 DEFAULT NULL
    ,f                         IN  VARCHAR2 DEFAULT NULL
@@ -59,7 +59,7 @@ BEGIN
    -----------------------------------------------------------------------------
    IF NOT boo_mute
    THEN
-      HTP.PRN('{"name":"profile_assessment_units","records":[');
+      HTP.PRN('{"name":"profile_actions","records":[');
       
    END IF;
 
@@ -78,22 +78,24 @@ BEGIN
          ,KEY 'organizationid'              VALUE a.organizationid
          ,KEY 'organizationname'            VALUE a.organizationname
          ,KEY 'organizationtype'            VALUE a.organizationtype
-         ,KEY 'reportingcycle'              VALUE a.reportingcycle
          ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
          ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
+         ,KEY 'actionid'                    VALUE a.actionid
+         ,KEY 'actionname'                  VALUE a.actionname
+         ,KEY 'completiondate'              VALUE a.completiondate
+         ,KEY 'parameter'                   VALUE a.parameter
          ,KEY 'locationdescription'         VALUE a.locationdescription
+         ,KEY 'actiontype'                  VALUE a.actiontype
          ,KEY 'watertype'                   VALUE a.watertype
          ,KEY 'watersize'                   VALUE a.watersize
          ,KEY 'watersizeunits'              VALUE a.watersizeunits
-         ,KEY 'assessmentunitstate'         VALUE a.assessmentunitstatus
-         ,KEY 'useclassname'                VALUE a.useclassname
-         ,KEY 'sizesource'                  VALUE a.sizesource
-         ,KEY 'sourcescale'                 VALUE a.sourcescale
-         ,KEY 'locationtypecode'            VALUE a.locationtypecode
-         ,KEY 'locationtext'                VALUE a.locationtext
+         ,KEY 'actionagency'                VALUE a.actionagency
+         ,KEY 'inindiancountry'             VALUE a.inindiancountry
+         ,KEY 'includeinmeasure'            VALUE a.includeinmeasure
+         
       ) AS jout
       FROM
-      attains_app.profile_assessment_units a
+      attains_app.profile_actions a
       WHERE
           (int_offset IS NULL OR a.row_id >  int_offset)
       AND (int_limit  IS NULL OR a.row_id <= int_limit)
@@ -152,8 +154,8 @@ BEGIN
    
    END IF;
    
-END profile_assessment_units;
+END profile_actions;
 /
 
-GRANT EXECUTE ON attains_eq.profile_assessment_units TO attains_eq_rest;
+GRANT EXECUTE ON attains_eq.profile_actions TO attains_eq_rest;
 

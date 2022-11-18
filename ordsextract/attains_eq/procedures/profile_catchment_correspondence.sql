@@ -6,12 +6,12 @@ CREATE OR REPLACE PROCEDURE attains_eq.profile_catchment_correspondence(
 )
 AUTHID CURRENT_USER
 AS
-   boo_mute                       BOOLEAN := true;
+   boo_mute                       BOOLEAN := FALSE;
    
    int_offset                     PLS_INTEGER;
    int_limit                      PLS_INTEGER;
    boo_comma                      BOOLEAN;
-   str_slug                       VARCHAR2(4000);
+   str_slug                       VARCHAR2(4000 Char);
    
 BEGIN
 
@@ -31,6 +31,19 @@ BEGIN
    
    -----------------------------------------------------------------------------
    -- Step 20
+   -- Do the header verification check
+   -----------------------------------------------------------------------------
+   IF NOT attains_eq.header_check()
+   THEN
+      OWA_UTIL.MIME_HEADER('test/html',FALSE);
+      OWA_UTIL.STATUS_LINE(401,'Unauthorized',FALSE);
+      OWA_UTIL.HTTP_HEADER_CLOSE;
+      RETURN;
+      
+   END IF;
+   
+   -----------------------------------------------------------------------------
+   -- Step 30
    -- Write the header
    -----------------------------------------------------------------------------
    IF NOT boo_mute
@@ -40,11 +53,6 @@ BEGIN
       
    END IF;
    
-   -----------------------------------------------------------------------------
-   -- Step 30
-   -- Generate the header and start the output
-   -----------------------------------------------------------------------------
-
    -----------------------------------------------------------------------------
    -- Step 40
    -- Generate the header and start the output
@@ -56,30 +64,30 @@ BEGIN
    END IF;
 
    -----------------------------------------------------------------------------
-   -- Step 110
-   -- Loop through the streams
+   -- Step 50
+   -- Loop through the records
    -----------------------------------------------------------------------------
    boo_comma := FALSE;
    
    FOR json IN ( 
       SELECT  
       JSON_OBJECT(
-          KEY 'objectid'            VALUE a.objectid
-         ,KEY 'state'               VALUE a.state
-         ,KEY 'region'              VALUE a.region
-         ,KEY 'organizationid'      VALUE a.organizationid
-         ,KEY 'organizationname'    VALUE a.organizationname
-         ,KEY 'organizationtype'    VALUE a.organizationtype
-         ,KEY 'reportingcycle'      VALUE a.reportingcycle
-         ,KEY 'assessmentunitid'    VALUE a.assessmentunitid
-         ,KEY 'assessmentunitname'  VALUE a.assessmentunitname
-         ,KEY 'catchmentnhdplusid'  VALUE a.catchmentnhdplusid
+          KEY 'objectid'                    VALUE CAST(a.row_id AS INTEGER)
+         ,KEY 'state'                       VALUE a.state
+         ,KEY 'region'                      VALUE a.region
+         ,KEY 'organizationid'              VALUE a.organizationid
+         ,KEY 'organizationname'            VALUE a.organizationname
+         ,KEY 'organizationtype'            VALUE a.organizationtype
+         ,KEY 'reportingcycle'              VALUE a.reportingcycle
+         ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
+         ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
+         ,KEY 'catchmentnhdplusid'          VALUE a.catchmentnhdplusid
       ) AS jout
       FROM
       attains_app.profile_catchment_correspondence a
       WHERE
-          (int_offset IS NULL OR a.objectid >  int_offset)
-      AND (int_limit  IS NULL OR a.objectid <= int_limit)
+          (int_offset IS NULL OR a.row_id >  int_offset)
+      AND (int_limit  IS NULL OR a.row_id <= int_limit)
    )
    LOOP
       
@@ -95,7 +103,7 @@ BEGIN
          boo_comma := TRUE;
          
       END IF;
-      dbms_output.put_line(to_char(substr(json.jout,1,4000)) || CHR(13));
+
       attains_eq.util.clob2htp(
           p_input => json.jout
          ,p_mute  => boo_mute
@@ -104,12 +112,12 @@ BEGIN
    END LOOP;
    
    -----------------------------------------------------------------------------
-   -- Step 110
+   -- Step 60
    -- Close the response
    -----------------------------------------------------------------------------
    IF NOT boo_mute
    THEN
-      HTP.PRN('],');
+      HTP.PRN(']');
       
       IF int_offset IS NULL
       THEN
@@ -137,3 +145,6 @@ BEGIN
    
 END profile_catchment_correspondence;
 /
+
+GRANT EXECUTE ON attains_eq.profile_catchment_correspondence TO attains_eq_rest;
+

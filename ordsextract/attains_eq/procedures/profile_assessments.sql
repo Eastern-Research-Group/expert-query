@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE attains_eq.profile_assessment_units(
+CREATE OR REPLACE PROCEDURE attains_eq.profile_assessments(
     p_offset                  IN  VARCHAR2 DEFAULT NULL
    ,p_limit                   IN  VARCHAR2 DEFAULT NULL
    ,f                         IN  VARCHAR2 DEFAULT NULL
@@ -28,7 +28,7 @@ BEGIN
       int_limit := int_offset + int_limit;
       
    END IF;
-
+   
    -----------------------------------------------------------------------------
    -- Step 20
    -- Do the header verification check
@@ -59,13 +59,13 @@ BEGIN
    -----------------------------------------------------------------------------
    IF NOT boo_mute
    THEN
-      HTP.PRN('{"name":"profile_assessment_units","records":[');
+      HTP.PRN('{"name":"profile_assessments","records":[');
       
    END IF;
 
    -----------------------------------------------------------------------------
    -- Step 50
-   -- Loop through the records
+   -- Loop through the streams
    -----------------------------------------------------------------------------
    boo_comma := FALSE;
    
@@ -81,19 +81,55 @@ BEGIN
          ,KEY 'reportingcycle'              VALUE a.reportingcycle
          ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
          ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
+         ,KEY 'cyclelastassessed'           VALUE a.cyclelastassessed
+         ,KEY 'overallstatus'               VALUE a.overallstatus
+         ,KEY 'epaircategory'               VALUE a.epaircategory
+         ,KEY 'stateircategory'             VALUE a.stateircategory
+         ,KEY 'parametergroup'              VALUE a.parametergroup
+         ,KEY 'parametername'               VALUE a.parametername
+         ,KEY 'parameterstatus'             VALUE a.parameterstatus
+         ,KEY 'usegroup'                    VALUE a.usegroup
+         ,KEY 'usename'                     VALUE a.usename
+         ,KEY 'useircategory'               VALUE a.useircategory
+         ,KEY 'usestateircategory'          VALUE a.usestateircategory
+         ,KEY 'usesupport'                  VALUE a.usesupport
+         ,KEY 'parameterattainment'         VALUE a.parameterattainment
+         ,KEY 'parameterircategory'         VALUE a.parameterircategory
+         ,KEY 'parameterstateircategory'    VALUE a.parameterstateircategory
+         ,KEY 'cyclefirstlisted'            VALUE a.cyclefirstlisted
+         ,KEY 'associatedactionid'          VALUE a.associatedactionid
+         ,KEY 'associatedactionname'        VALUE a.associatedactionname
+         ,KEY 'associatedactiontype'        VALUE a.associatedactiontype
          ,KEY 'locationdescription'         VALUE a.locationdescription
          ,KEY 'watertype'                   VALUE a.watertype
          ,KEY 'watersize'                   VALUE a.watersize
          ,KEY 'watersizeunits'              VALUE a.watersizeunits
-         ,KEY 'assessmentunitstate'         VALUE a.assessmentunitstatus
-         ,KEY 'useclassname'                VALUE a.useclassname
          ,KEY 'sizesource'                  VALUE a.sizesource
          ,KEY 'sourcescale'                 VALUE a.sourcescale
-         ,KEY 'locationtypecode'            VALUE a.locationtypecode
-         ,KEY 'locationtext'                VALUE a.locationtext
+         ,KEY 'assessmentunitstatus'        VALUE a.assessmentunitstatus
+         ,KEY 'useclassname'                VALUE a.useclassname
+         ,KEY 'assessmentdate'              VALUE a.assessmentdate
+         ,KEY 'assessmentbasis'             VALUE a.assessmentbasis
+         ,KEY 'monitoringstartdate'         VALUE a.monitoringstartdate
+         ,KEY 'monitoringenddate'           VALUE a.monitoringenddate
+         ,KEY 'assessmentmethods'           VALUE a.assessmentmethods
+         ,KEY 'assessmenttypes'             VALUE a.assessmenttypes
+         ,KEY 'delisted'                    VALUE a.delisted
+         ,KEY 'delistedreason'              VALUE a.delistedreason
+         ,KEY 'seasonstartdate'             VALUE a.seasonstartdate
+         ,KEY 'seasonenddate'               VALUE a.seasonenddate
+         ,KEY 'pollutantindicator'          VALUE a.pollutantindicator
+         ,KEY 'cyclescheduledfortmdl'       VALUE a.cyclescheduledfortmdl
+         ,KEY 'cycleexpectedtoattain'       VALUE a.cycleexpectedtoattain
+         ,KEY 'cwa303dpriorityranking'      VALUE a.cwa303dpriorityranking
+         ,KEY 'vision303dpriority'          VALUE a.vision303dpriority
+         ,KEY 'alternatelistingidentifier'  VALUE a.alternatelistingidentifier
+         ,KEY 'consentdecreecycle'          VALUE a.consentdecreecycle
+         ,KEY 'associatedactionstatus'      VALUE a.associatedactionstatus
+         ,KEY 'associatedactionagency'      VALUE a.associatedactionagency        
       ) AS jout
       FROM
-      attains_app.profile_assessment_units a
+      attains_app.profile_assessments a
       WHERE
           (int_offset IS NULL OR a.row_id >  int_offset)
       AND (int_limit  IS NULL OR a.row_id <= int_limit)
@@ -152,8 +188,8 @@ BEGIN
    
    END IF;
    
-END profile_assessment_units;
+END profile_assessments;
 /
 
-GRANT EXECUTE ON attains_eq.profile_assessment_units TO attains_eq_rest;
+GRANT EXECUTE ON attains_eq.profile_assessments TO attains_eq_rest;
 
