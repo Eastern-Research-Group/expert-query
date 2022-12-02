@@ -7,49 +7,145 @@ CREATE OR REPLACE PROCEDURE attains_eq.profile_stats(
 AUTHID CURRENT_USER
 AS
    boo_mute                       BOOLEAN := FALSE;
+   str_num_rows                   VARCHAR2(4000 Char);
+   str_last_analyzed              VARCHAR2(4000 Char);
+   str_staleness                  VARCHAR2(4000 Char);
+   str_last_refresh_date          VARCHAR2(4000 Char);
+   str_last_refresh_end_time      VARCHAR2(4000 Char);
+   str_last_refresh_type          VARCHAR2(4000 Char);
 
-   FUNCTION table_count(
-      p_in IN VARCHAR2
-   ) RETURN VARCHAR2
+   PROCEDURE all_tables(
+       p_in              IN  VARCHAR2
+      ,out_num_rows      OUT VARCHAR2
+      ,out_last_analyzed OUT VARCHAR2
+   )
    AS
-      int_count PLS_INTEGER;
+      int_num_rows      INTEGER;
+      dat_last_analyzed DATE;
+      
    BEGIN
-      EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM attains_app.' || p_in || ' a'
-      INTO int_count;
+      SELECT
+       a.num_rows
+      ,a.last_analyzed 
+      INTO 
+       int_num_rows
+      ,dat_last_analyzed 
+      FROM 
+      all_tables a 
+      WHERE 
+          a.owner = 'ATTAINS_APP' 
+      AND a.table_name = p_in;
       
-      RETURN TO_CHAR(int_count);
+      IF int_num_rows IS NOT NULL
+      THEN
+         out_num_rows      := TO_CHAR(int_num_rows);
+         
+      ELSE
+         out_num_rows      := 'null';
+         
+      END IF;
       
+      IF dat_last_analyzed IS NOT NULL
+      THEN
+         out_last_analyzed := '"' || TO_CHAR(
+             TO_TIMESTAMP(dat_last_analyzed)
+            ,'YYYY-MM-DD"T"HH24:MI:SS.FF2TZR'
+         ) || '"';
+         
+      ELSE
+         out_last_analyzed := 'null';
+      
+      END IF;
+         
    EXCEPTION
       WHEN OTHERS
       THEN
-         RETURN '"error"';
+         out_num_rows      := '"err"';
+         out_last_analyzed := '"err"';
+         RETURN;
 
-   END table_count;
+   END all_tables;
 
-   FUNCTION refresh_date(
-      p_in IN VARCHAR2
-   ) RETURN VARCHAR2
+   PROCEDURE all_mviews(
+       p_in                      IN  VARCHAR2
+      ,out_staleness             OUT VARCHAR2
+      ,out_last_refresh_date     OUT VARCHAR2
+      ,out_last_refresh_end_time OUT VARCHAR2
+      ,out_last_refresh_type     OUT VARCHAR2
+   )
    AS
-      dat_refresh DATE;
-   BEGIN
-      SELECT a.last_refresh_date INTO dat_refresh FROM all_mviews a 
-      WHERE a.owner = 'ATTAINS_APP' AND a.mview_name = p_in;
+      dat_last_refresh_date     DATE;
+      dat_last_refresh_end_time DATE;
       
-      RETURN '"' || TO_CHAR(
-          TO_TIMESTAMP(dat_refresh)
-         ,'YYYY-MM-DD"T"HH24:MI:SS.FF2TZR'
-      ) || '"';
+   BEGIN
+      SELECT
+       a.staleness 
+      ,a.last_refresh_date 
+      ,a.last_refresh_end_time
+      ,a.last_refresh_type
+      INTO 
+       out_staleness
+      ,dat_last_refresh_date
+      ,dat_last_refresh_end_time
+      ,out_last_refresh_type
+      FROM 
+      all_mviews a 
+      WHERE 
+          a.owner = 'ATTAINS_APP'
+      AND a.mview_name = p_in;
+      
+      IF out_staleness IS NOT NULL
+      THEN
+         out_staleness := '"' || out_staleness || '"';
+      
+      ELSE
+         out_staleness := 'null';
+         
+      END IF;
+      
+      IF dat_last_refresh_date IS NOT NULL
+      THEN
+         out_last_refresh_date := '"' || TO_CHAR(
+             TO_TIMESTAMP(dat_last_refresh_date)
+            ,'YYYY-MM-DD"T"HH24:MI:SS.FF2TZR'
+         ) || '"';
+         
+      ELSE
+         out_last_refresh_date := 'null';
+         
+      END IF;
+      
+      IF dat_last_refresh_end_time IS NOT NULL
+      THEN
+         out_last_refresh_end_time := '"' || TO_CHAR(
+             TO_TIMESTAMP(dat_last_refresh_end_time)
+            ,'YYYY-MM-DD"T"HH24:MI:SS.FF2TZR'
+         ) || '"';
+         
+      ELSE
+         out_last_refresh_end_time := 'null';
+      
+      END IF;
+      
+      IF out_last_refresh_type IS NOT NULL
+      THEN
+         out_last_refresh_type := '"' || out_last_refresh_type || '"';
+         
+      ELSE
+         out_last_refresh_type := 'null';
+         
+      END IF;
    
    EXCEPTION
-      WHEN NO_DATA_FOUND
-      THEN
-         RETURN '"error"';
-         
       WHEN OTHERS
       THEN
-         RAISE;
+         out_staleness             := '"err"';
+         out_last_refresh_date     := '"err"';
+         out_last_refresh_end_time := '"err"';
+         out_last_refresh_type     := '"err"';
+         RETURN;
          
-   END refresh_date;
+   END all_mviews;
    
 BEGIN
 
@@ -95,49 +191,185 @@ BEGIN
    -----------------------------------------------------------------------------
    -- Step 50
    -- Loop through the streams
-   ----------------------------------------------------------------------------- 
+   -----------------------------------------------------------------------------
+   all_tables(
+       p_in                      => 'PROFILE_ACTIONS'
+      ,out_num_rows              => str_num_rows
+      ,out_last_analyzed         => str_last_analyzed
+   );
+   all_mviews(
+       p_in                      => 'PROFILE_ACTIONS'
+      ,out_staleness             => str_staleness
+      ,out_last_refresh_date     => str_last_refresh_date
+      ,out_last_refresh_end_time => str_last_refresh_end_time
+      ,out_last_refresh_type     => str_last_refresh_type
+   );
    IF NOT boo_mute
    THEN
       HTP.PRN('{');
       HTP.PRN('"name":"profile_actions"');
-      HTP.PRN(',"count":' || table_count('PROFILE_ACTIONS'));
-      HTP.PRN(',"last_refresh":' || refresh_date('PROFILE_ACTIONS'));
+      HTP.PRN(',"staleness":' || str_staleness);
+      HTP.PRN(',"last_refresh_date":' || str_last_refresh_date);
+      HTP.PRN(',"last_refresh_end_time":' || str_last_refresh_end_time);
+      HTP.PRN(',"last_refresh_type":' || str_last_refresh_type);
+      HTP.PRN(',"num_rows":' || str_num_rows);
+      HTP.PRN(',"last_analyzed":' || str_last_analyzed);
       HTP.PRN('},');
+   
+   END IF;
       
+   all_tables(
+       p_in                      => 'PROFILE_ASSESSMENTS'
+      ,out_num_rows              => str_num_rows
+      ,out_last_analyzed         => str_last_analyzed
+   );
+   all_mviews(
+       p_in                      => 'PROFILE_ASSESSMENTS'
+      ,out_staleness             => str_staleness
+      ,out_last_refresh_date     => str_last_refresh_date
+      ,out_last_refresh_end_time => str_last_refresh_end_time
+      ,out_last_refresh_type     => str_last_refresh_type
+   );
+   IF NOT boo_mute
+   THEN
       HTP.PRN('{');
       HTP.PRN('"name":"profile_assessments"');
-      HTP.PRN(',"count":' || table_count('PROFILE_ASSESSMENTS'));
-      HTP.PRN(',"last_refresh":' || refresh_date('PROFILE_ASSESSMENTS'));
+      HTP.PRN(',"staleness":' || str_staleness);
+      HTP.PRN(',"last_refresh_date":' || str_last_refresh_date);
+      HTP.PRN(',"last_refresh_end_time":' || str_last_refresh_end_time);
+      HTP.PRN(',"last_refresh_type":' || str_last_refresh_type);
+      HTP.PRN(',"num_rows":' || str_num_rows);
+      HTP.PRN(',"last_analyzed":' || str_last_analyzed);
       HTP.PRN('},');
-
+   
+   END IF;
+   
+   all_tables(
+       p_in                      => 'PROFILE_ASSESSMENT_UNITS'
+      ,out_num_rows              => str_num_rows
+      ,out_last_analyzed         => str_last_analyzed
+   );
+   all_mviews(
+       p_in                      => 'PROFILE_ASSESSMENT_UNITS'
+      ,out_staleness             => str_staleness
+      ,out_last_refresh_date     => str_last_refresh_date
+      ,out_last_refresh_end_time => str_last_refresh_end_time
+      ,out_last_refresh_type     => str_last_refresh_type
+   );
+   IF NOT boo_mute
+   THEN
       HTP.PRN('{');
       HTP.PRN('"name":"profile_assessment_units"');
-      HTP.PRN(',"count":' || table_count('PROFILE_ASSESSMENT_UNITS'));
-      HTP.PRN(',"last_refresh":' || refresh_date('PROFILE_ASSESSMENT_UNITS'));
+      HTP.PRN(',"staleness":' || str_staleness);
+      HTP.PRN(',"last_refresh_date":' || str_last_refresh_date);
+      HTP.PRN(',"last_refresh_end_time":' || str_last_refresh_end_time);
+      HTP.PRN(',"last_refresh_type":' || str_last_refresh_type);
+      HTP.PRN(',"num_rows":' || str_num_rows);
+      HTP.PRN(',"last_analyzed":' || str_last_analyzed);
       HTP.PRN('},');
-      
+   
+   END IF;
+   
+   all_tables(
+       p_in                      => 'PROFILE_ASSESSMENT_UNITS_MONITORING_LOCATIONS'
+      ,out_num_rows              => str_num_rows
+      ,out_last_analyzed         => str_last_analyzed
+   );
+   all_mviews(
+       p_in                      => 'PROFILE_ASSESSMENT_UNITS_MONITORING_LOCATIONS'
+      ,out_staleness             => str_staleness
+      ,out_last_refresh_date     => str_last_refresh_date
+      ,out_last_refresh_end_time => str_last_refresh_end_time
+      ,out_last_refresh_type     => str_last_refresh_type
+   );
+   IF NOT boo_mute
+   THEN   
       HTP.PRN('{');
       HTP.PRN('"name":"profile_assessment_units_monitoring_locations"');
-      HTP.PRN(',"count":' || table_count('PROFILE_ASSESSMENT_UNITS_MONITORING_LOCATIONS'));
-      HTP.PRN(',"last_refresh":' || refresh_date('PROFILE_ASSESSMENT_UNITS_MONITORING_LOCATIONS'));
+      HTP.PRN(',"staleness":' || str_staleness);
+      HTP.PRN(',"last_refresh_date":' || str_last_refresh_date);
+      HTP.PRN(',"last_refresh_end_time":' || str_last_refresh_end_time);
+      HTP.PRN(',"last_refresh_type":' || str_last_refresh_type);
+      HTP.PRN(',"num_rows":' || str_num_rows);
+      HTP.PRN(',"last_analyzed":' || str_last_analyzed);
       HTP.PRN('},');
-
+   
+   END IF;
+   
+   all_tables(
+       p_in                      => 'PROFILE_CATCHMENT_CORRESPONDENCE'
+      ,out_num_rows              => str_num_rows
+      ,out_last_analyzed         => str_last_analyzed
+   );
+   all_mviews(
+       p_in                      => 'PROFILE_CATCHMENT_CORRESPONDENCE'
+      ,out_staleness             => str_staleness
+      ,out_last_refresh_date     => str_last_refresh_date
+      ,out_last_refresh_end_time => str_last_refresh_end_time
+      ,out_last_refresh_type     => str_last_refresh_type
+   );
+   IF NOT boo_mute
+   THEN
       HTP.PRN('{');
       HTP.PRN('"name":"profile_catchment_correspondence"');
-      HTP.PRN(',"count":' || table_count('PROFILE_CATCHMENT_CORRESPONDENCE'));
-      HTP.PRN(',"last_refresh":' || refresh_date('PROFILE_CATCHMENT_CORRESPONDENCE'));
+      HTP.PRN(',"staleness":' || str_staleness);
+      HTP.PRN(',"last_refresh_date":' || str_last_refresh_date);
+      HTP.PRN(',"last_refresh_end_time":' || str_last_refresh_end_time);
+      HTP.PRN(',"last_refresh_type":' || str_last_refresh_type);
+      HTP.PRN(',"num_rows":' || str_num_rows);
+      HTP.PRN(',"last_analyzed":' || str_last_analyzed);
       HTP.PRN('},');
-
+   
+   END IF;
+   
+   all_tables(
+       p_in                      => 'PROFILE_SOURCES'
+      ,out_num_rows              => str_num_rows
+      ,out_last_analyzed         => str_last_analyzed
+   );
+   all_mviews(
+       p_in                      => 'PROFILE_SOURCES'
+      ,out_staleness             => str_staleness
+      ,out_last_refresh_date     => str_last_refresh_date
+      ,out_last_refresh_end_time => str_last_refresh_end_time
+      ,out_last_refresh_type     => str_last_refresh_type
+   );
+   IF NOT boo_mute
+   THEN
       HTP.PRN('{');
       HTP.PRN('"name":"profile_sources"');
-      HTP.PRN(',"count":' || table_count('PROFILE_SOURCES'));
-      HTP.PRN(',"last_refresh":' || refresh_date('PROFILE_SOURCES'));
+      HTP.PRN(',"staleness":' || str_staleness);
+      HTP.PRN(',"last_refresh_date":' || str_last_refresh_date);
+      HTP.PRN(',"last_refresh_end_time":' || str_last_refresh_end_time);
+      HTP.PRN(',"last_refresh_type":' || str_last_refresh_type);
+      HTP.PRN(',"num_rows":' || str_num_rows);
+      HTP.PRN(',"last_analyzed":' || str_last_analyzed);
       HTP.PRN('},');
+   
+   END IF;
 
+   all_tables(
+       p_in                      => 'PROFILE_TMDL'
+      ,out_num_rows              => str_num_rows
+      ,out_last_analyzed         => str_last_analyzed
+   );
+   all_mviews(
+       p_in                      => 'PROFILE_TMDL'
+      ,out_staleness             => str_staleness
+      ,out_last_refresh_date     => str_last_refresh_date
+      ,out_last_refresh_end_time => str_last_refresh_end_time
+      ,out_last_refresh_type     => str_last_refresh_type
+   );
+   IF NOT boo_mute
+   THEN
       HTP.PRN('{');
       HTP.PRN('"name":"profile_tmdl"');
-      HTP.PRN(',"count":' || table_count('PROFILE_TMDL'));
-      HTP.PRN(',"last_refresh":' || refresh_date('PROFILE_TMDL'));
+      HTP.PRN(',"staleness":' || str_staleness);
+      HTP.PRN(',"last_refresh_date":' || str_last_refresh_date);
+      HTP.PRN(',"last_refresh_end_time":' || str_last_refresh_end_time);
+      HTP.PRN(',"last_refresh_type":' || str_last_refresh_type);
+      HTP.PRN(',"num_rows":' || str_num_rows);
+      HTP.PRN(',"last_analyzed":' || str_last_analyzed);
       HTP.PRN('}');
       
    END IF;
@@ -149,7 +381,6 @@ BEGIN
    IF NOT boo_mute
    THEN
       HTP.PRN(']');
-
       HTP.PRN('}');
         
    END IF;
