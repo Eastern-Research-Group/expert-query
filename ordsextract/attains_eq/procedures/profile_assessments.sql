@@ -27,6 +27,25 @@ BEGIN
    THEN
       int_limit := int_offset + int_limit;
       
+   ELSE
+      IF int_limit IS NULL
+      THEN
+         int_limit := 10000;
+         
+      END IF;
+      
+      IF int_offset IS NULL
+      THEN
+         int_offset := 0;
+
+      END IF;
+   
+   END IF;
+   
+   IF f = 'MUTE'
+   THEN
+      boo_mute := TRUE;
+      
    END IF;
    
    -----------------------------------------------------------------------------
@@ -69,8 +88,8 @@ BEGIN
    -----------------------------------------------------------------------------
    boo_comma := FALSE;
    
-   FOR json IN ( 
-      SELECT  
+   FOR json_rec IN ( 
+      SELECT /*+ INDEX(PROFILE_ASSESSMENTS_UX1) NO_PARALLEL(a) */ 
       JSON_OBJECT(
           KEY 'objectid'                    VALUE CAST(a.row_id AS INTEGER)
          ,KEY 'state'                       VALUE a.state
@@ -131,8 +150,8 @@ BEGIN
       FROM
       attains_app.profile_assessments a
       WHERE
-          (int_offset IS NULL OR a.row_id >  int_offset)
-      AND (int_limit  IS NULL OR a.row_id <= int_limit)
+          a.row_id >  int_offset
+      AND a.row_id <= int_limit
    )
    LOOP
       
@@ -150,7 +169,7 @@ BEGIN
       END IF;
 
       attains_eq.util.clob2htp(
-          p_input => json.jout
+          p_input => json_rec.jout
          ,p_mute  => boo_mute
       );
       
