@@ -1,5 +1,8 @@
 CREATE OR REPLACE PROCEDURE attains_eq.profile_assessments(
-    p_offset                  IN  VARCHAR2 DEFAULT NULL
+    p_state                   IN  VARCHAR2 DEFAULT NULL
+   ,p_organizationid          IN  VARCHAR2 DEFAULT NULL
+   ,p_reportingcycle          IN  VARCHAR2 DEFAULT NULL
+   ,p_offset                  IN  VARCHAR2 DEFAULT NULL
    ,p_limit                   IN  VARCHAR2 DEFAULT NULL
    ,f                         IN  VARCHAR2 DEFAULT NULL
    ,api_key                   IN  VARCHAR2 DEFAULT NULL
@@ -7,7 +10,9 @@ CREATE OR REPLACE PROCEDURE attains_eq.profile_assessments(
 AUTHID CURRENT_USER
 AS
    boo_mute                       BOOLEAN := FALSE;
-   
+   ary_states                     attains_eq.string_array;
+   ary_orgids                     attains_eq.string_array;
+   ary_cycles                     attains_eq.integer_array;
    int_offset                     PLS_INTEGER;
    int_limit                      PLS_INTEGER;
    boo_comma                      BOOLEAN;
@@ -19,6 +24,24 @@ BEGIN
    -- Step 10
    -- Check over incoming parameters
    -----------------------------------------------------------------------------
+   IF p_state IS NOT NULL
+   THEN
+      ary_states := util.str2arystr(p_state);
+      
+   END IF;
+   
+   IF p_organizationid IS NOT NULL
+   THEN
+      ary_orgids := util.str2arystr(p_organizationid);
+      
+   END IF;
+   
+   IF p_reportingcycle IS NOT NULL
+   THEN
+      ary_cycles := util.str2aryint(p_reportingcycle);
+      
+   END IF;
+   
    int_offset := util.str2integer(p_offset);
    int_limit  := util.str2integer(p_limit);
 
@@ -88,92 +111,248 @@ BEGIN
    -----------------------------------------------------------------------------
    boo_comma := FALSE;
    
-   FOR json_rec IN ( 
-      SELECT /*+ INDEX(PROFILE_ASSESSMENTS_UX1) NO_PARALLEL(a) */ 
-      JSON_OBJECT(
-          KEY 'objectid'                    VALUE CAST(a.row_id AS INTEGER)
-         ,KEY 'state'                       VALUE a.state
-         ,KEY 'region'                      VALUE a.region
-         ,KEY 'organizationid'              VALUE a.organizationid
-         ,KEY 'organizationname'            VALUE a.organizationname
-         ,KEY 'organizationtype'            VALUE a.organizationtype
-         ,KEY 'reportingcycle'              VALUE a.reportingcycle
-         ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
-         ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
-         ,KEY 'cyclelastassessed'           VALUE a.cyclelastassessed
-         ,KEY 'overallstatus'               VALUE a.overallstatus
-         ,KEY 'epaircategory'               VALUE a.epaircategory
-         ,KEY 'stateircategory'             VALUE a.stateircategory
-         ,KEY 'parametergroup'              VALUE a.parametergroup
-         ,KEY 'parametername'               VALUE a.parametername
-         ,KEY 'parameterstatus'             VALUE a.parameterstatus
-         ,KEY 'usegroup'                    VALUE a.usegroup
-         ,KEY 'usename'                     VALUE a.usename
-         ,KEY 'useircategory'               VALUE a.useircategory
-         ,KEY 'usestateircategory'          VALUE a.usestateircategory
-         ,KEY 'usesupport'                  VALUE a.usesupport
-         ,KEY 'parameterattainment'         VALUE a.parameterattainment
-         ,KEY 'parameterircategory'         VALUE a.parameterircategory
-         ,KEY 'parameterstateircategory'    VALUE a.parameterstateircategory
-         ,KEY 'cyclefirstlisted'            VALUE a.cyclefirstlisted
-         ,KEY 'associatedactionid'          VALUE a.associatedactionid
-         ,KEY 'associatedactionname'        VALUE a.associatedactionname
-         ,KEY 'associatedactiontype'        VALUE a.associatedactiontype
-         ,KEY 'locationdescription'         VALUE a.locationdescription
-         ,KEY 'watertype'                   VALUE a.watertype
-         ,KEY 'watersize'                   VALUE a.watersize
-         ,KEY 'watersizeunits'              VALUE a.watersizeunits
-         ,KEY 'sizesource'                  VALUE a.sizesource
-         ,KEY 'sourcescale'                 VALUE a.sourcescale
-         ,KEY 'assessmentunitstatus'        VALUE a.assessmentunitstatus
-         ,KEY 'useclassname'                VALUE a.useclassname
-         ,KEY 'assessmentdate'              VALUE a.assessmentdate
-         ,KEY 'assessmentbasis'             VALUE a.assessmentbasis
-         ,KEY 'monitoringstartdate'         VALUE a.monitoringstartdate
-         ,KEY 'monitoringenddate'           VALUE a.monitoringenddate
-         ,KEY 'assessmentmethods'           VALUE a.assessmentmethods
-         ,KEY 'assessmenttypes'             VALUE a.assessmenttypes
-         ,KEY 'delisted'                    VALUE a.delisted
-         ,KEY 'delistedreason'              VALUE a.delistedreason
-         ,KEY 'seasonstartdate'             VALUE a.seasonstartdate
-         ,KEY 'seasonenddate'               VALUE a.seasonenddate
-         ,KEY 'pollutantindicator'          VALUE a.pollutantindicator
-         ,KEY 'cyclescheduledfortmdl'       VALUE a.cyclescheduledfortmdl
-         ,KEY 'cycleexpectedtoattain'       VALUE a.cycleexpectedtoattain
-         ,KEY 'cwa303dpriorityranking'      VALUE a.cwa303dpriorityranking
-         ,KEY 'vision303dpriority'          VALUE a.vision303dpriority
-         ,KEY 'alternatelistingidentifier'  VALUE a.alternatelistingidentifier
-         ,KEY 'consentdecreecycle'          VALUE a.consentdecreecycle
-         ,KEY 'associatedactionstatus'      VALUE a.associatedactionstatus
-         ,KEY 'associatedactionagency'      VALUE a.associatedactionagency        
-      ) AS jout
-      FROM
-      attains_app.profile_assessments a
-      WHERE
-          a.row_id >  int_offset
-      AND a.row_id <= int_limit
-   )
-   LOOP
-      
-      IF boo_comma
-      THEN
-         IF NOT boo_mute
-         THEN
-            HTP.PRN(',');
+   IF ary_states IS NOT NULL
+   OR ary_orgids IS NOT NULL
+   OR ary_cycles IS NOT NULL
+   THEN   
+      FOR json_rec IN ( 
+         SELECT
+         JSON_OBJECT(
+             KEY 'objectid'                    VALUE a.objectid
+            ,KEY 'state'                       VALUE a.state
+            ,KEY 'region'                      VALUE a.region
+            ,KEY 'organizationid'              VALUE a.organizationid
+            ,KEY 'organizationname'            VALUE a.organizationname
+            ,KEY 'organizationtype'            VALUE a.organizationtype
+            ,KEY 'reportingcycle'              VALUE a.reportingcycle
+            ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
+            ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
+            ,KEY 'cyclelastassessed'           VALUE a.cyclelastassessed
+            ,KEY 'overallstatus'               VALUE a.overallstatus
+            ,KEY 'epaircategory'               VALUE a.epaircategory
+            ,KEY 'stateircategory'             VALUE a.stateircategory
+            ,KEY 'parametergroup'              VALUE a.parametergroup
+            ,KEY 'parametername'               VALUE a.parametername
+            ,KEY 'parameterstatus'             VALUE a.parameterstatus
+            ,KEY 'usegroup'                    VALUE a.usegroup
+            ,KEY 'usename'                     VALUE a.usename
+            ,KEY 'useircategory'               VALUE a.useircategory
+            ,KEY 'usestateircategory'          VALUE a.usestateircategory
+            ,KEY 'usesupport'                  VALUE a.usesupport
+            ,KEY 'parameterattainment'         VALUE a.parameterattainment
+            ,KEY 'parameterircategory'         VALUE a.parameterircategory
+            ,KEY 'parameterstateircategory'    VALUE a.parameterstateircategory
+            ,KEY 'cyclefirstlisted'            VALUE a.cyclefirstlisted
+            ,KEY 'associatedactionid'          VALUE a.associatedactionid
+            ,KEY 'associatedactionname'        VALUE a.associatedactionname
+            ,KEY 'associatedactiontype'        VALUE a.associatedactiontype
+            ,KEY 'locationdescription'         VALUE a.locationdescription
+            ,KEY 'watertype'                   VALUE a.watertype
+            ,KEY 'watersize'                   VALUE a.watersize
+            ,KEY 'watersizeunits'              VALUE a.watersizeunits
+            ,KEY 'sizesource'                  VALUE a.sizesource
+            ,KEY 'sourcescale'                 VALUE a.sourcescale
+            ,KEY 'assessmentunitstatus'        VALUE a.assessmentunitstatus
+            ,KEY 'useclassname'                VALUE a.useclassname
+            ,KEY 'assessmentdate'              VALUE a.assessmentdate
+            ,KEY 'assessmentbasis'             VALUE a.assessmentbasis
+            ,KEY 'monitoringstartdate'         VALUE a.monitoringstartdate
+            ,KEY 'monitoringenddate'           VALUE a.monitoringenddate
+            ,KEY 'assessmentmethods'           VALUE a.assessmentmethods
+            ,KEY 'assessmenttypes'             VALUE a.assessmenttypes
+            ,KEY 'delisted'                    VALUE a.delisted
+            ,KEY 'delistedreason'              VALUE a.delistedreason
+            ,KEY 'seasonstartdate'             VALUE a.seasonstartdate
+            ,KEY 'seasonenddate'               VALUE a.seasonenddate
+            ,KEY 'pollutantindicator'          VALUE a.pollutantindicator
+            ,KEY 'cyclescheduledfortmdl'       VALUE a.cyclescheduledfortmdl
+            ,KEY 'cycleexpectedtoattain'       VALUE a.cycleexpectedtoattain
+            ,KEY 'cwa303dpriorityranking'      VALUE a.cwa303dpriorityranking
+            ,KEY 'vision303dpriority'          VALUE a.vision303dpriority
+            ,KEY 'alternatelistingidentifier'  VALUE a.alternatelistingidentifier
+            ,KEY 'consentdecreecycle'          VALUE a.consentdecreecycle
+            ,KEY 'associatedactionstatus'      VALUE a.associatedactionstatus
+            ,KEY 'associatedactionagency'      VALUE a.associatedactionagency        
+         ) AS jout
+         FROM (
+            SELECT
+             CAST(rownum AS INTEGER) AS objectid
+            ,aa.state
+            ,aa.region
+            ,aa.organizationid
+            ,aa.organizationname
+            ,aa.organizationtype
+            ,aa.reportingcycle
+            ,aa.assessmentunitid
+            ,aa.assessmentunitname
+            ,aa.cyclelastassessed
+            ,aa.overallstatus
+            ,aa.epaircategory
+            ,aa.stateircategory
+            ,aa.parametergroup
+            ,aa.parametername
+            ,aa.parameterstatus
+            ,aa.usegroup
+            ,aa.usename
+            ,aa.useircategory
+            ,aa.usestateircategory
+            ,aa.usesupport
+            ,aa.parameterattainment
+            ,aa.parameterircategory
+            ,aa.parameterstateircategory
+            ,aa.cyclefirstlisted
+            ,aa.associatedactionid
+            ,aa.associatedactionname
+            ,aa.associatedactiontype
+            ,aa.locationdescription
+            ,aa.watertype
+            ,aa.watersize
+            ,aa.watersizeunits
+            ,aa.sizesource
+            ,aa.sourcescale
+            ,aa.assessmentunitstatus
+            ,aa.useclassname
+            ,aa.assessmentdate
+            ,aa.assessmentbasis
+            ,aa.monitoringstartdate
+            ,aa.monitoringenddate
+            ,aa.assessmentmethods
+            ,aa.assessmenttypes
+            ,aa.delisted
+            ,aa.delistedreason
+            ,aa.seasonstartdate
+            ,aa.seasonenddate
+            ,aa.pollutantindicator
+            ,aa.cyclescheduledfortmdl
+            ,aa.cycleexpectedtoattain
+            ,aa.cwa303dpriorityranking
+            ,aa.vision303dpriority
+            ,aa.alternatelistingidentifier
+            ,aa.consentdecreecycle
+            ,aa.associatedactionstatus
+            ,aa.associatedactionagency
+            FROM
+            attains_app.profile_assessments aa
+            WHERE
+                ( ary_states IS NULL OR aa.state          IN (SELECT column_value FROM TABLE(ary_states)) )
+            AND ( ary_orgids IS NULL OR aa.organizationid IN (SELECT column_value FROM TABLE(ary_orgids)) )
+            AND ( ary_cycles IS NULL OR aa.reportingcycle IN (SELECT column_value FROM TABLE(ary_cycles)) )
+            ORDER BY
+            aa.row_id
+            OFFSET int_offset ROWS FETCH NEXT int_limit ROWS ONLY
+         ) a
+      )
+      LOOP
          
+         IF boo_comma
+         THEN
+            IF NOT boo_mute
+            THEN
+               HTP.PRN(',');
+            
+            END IF;
+
+         ELSE
+            boo_comma := TRUE;
+            
          END IF;
 
-      ELSE
-         boo_comma := TRUE;
+         attains_eq.util.clob2htp(
+             p_input => json_rec.jout
+            ,p_mute  => boo_mute
+         );
          
-      END IF;
-
-      attains_eq.util.clob2htp(
-          p_input => json_rec.jout
-         ,p_mute  => boo_mute
-      );
+      END LOOP;
       
-   END LOOP;
+   ELSE
+            FOR json_rec IN ( 
+         SELECT /*+ INDEX(PROFILE_ASSESSMENTS_UX1) NO_PARALLEL(a) */ 
+         JSON_OBJECT(
+             KEY 'objectid'                    VALUE CAST(a.row_id AS INTEGER)
+            ,KEY 'state'                       VALUE a.state
+            ,KEY 'region'                      VALUE a.region
+            ,KEY 'organizationid'              VALUE a.organizationid
+            ,KEY 'organizationname'            VALUE a.organizationname
+            ,KEY 'organizationtype'            VALUE a.organizationtype
+            ,KEY 'reportingcycle'              VALUE a.reportingcycle
+            ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
+            ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
+            ,KEY 'cyclelastassessed'           VALUE a.cyclelastassessed
+            ,KEY 'overallstatus'               VALUE a.overallstatus
+            ,KEY 'epaircategory'               VALUE a.epaircategory
+            ,KEY 'stateircategory'             VALUE a.stateircategory
+            ,KEY 'parametergroup'              VALUE a.parametergroup
+            ,KEY 'parametername'               VALUE a.parametername
+            ,KEY 'parameterstatus'             VALUE a.parameterstatus
+            ,KEY 'usegroup'                    VALUE a.usegroup
+            ,KEY 'usename'                     VALUE a.usename
+            ,KEY 'useircategory'               VALUE a.useircategory
+            ,KEY 'usestateircategory'          VALUE a.usestateircategory
+            ,KEY 'usesupport'                  VALUE a.usesupport
+            ,KEY 'parameterattainment'         VALUE a.parameterattainment
+            ,KEY 'parameterircategory'         VALUE a.parameterircategory
+            ,KEY 'parameterstateircategory'    VALUE a.parameterstateircategory
+            ,KEY 'cyclefirstlisted'            VALUE a.cyclefirstlisted
+            ,KEY 'associatedactionid'          VALUE a.associatedactionid
+            ,KEY 'associatedactionname'        VALUE a.associatedactionname
+            ,KEY 'associatedactiontype'        VALUE a.associatedactiontype
+            ,KEY 'locationdescription'         VALUE a.locationdescription
+            ,KEY 'watertype'                   VALUE a.watertype
+            ,KEY 'watersize'                   VALUE a.watersize
+            ,KEY 'watersizeunits'              VALUE a.watersizeunits
+            ,KEY 'sizesource'                  VALUE a.sizesource
+            ,KEY 'sourcescale'                 VALUE a.sourcescale
+            ,KEY 'assessmentunitstatus'        VALUE a.assessmentunitstatus
+            ,KEY 'useclassname'                VALUE a.useclassname
+            ,KEY 'assessmentdate'              VALUE a.assessmentdate
+            ,KEY 'assessmentbasis'             VALUE a.assessmentbasis
+            ,KEY 'monitoringstartdate'         VALUE a.monitoringstartdate
+            ,KEY 'monitoringenddate'           VALUE a.monitoringenddate
+            ,KEY 'assessmentmethods'           VALUE a.assessmentmethods
+            ,KEY 'assessmenttypes'             VALUE a.assessmenttypes
+            ,KEY 'delisted'                    VALUE a.delisted
+            ,KEY 'delistedreason'              VALUE a.delistedreason
+            ,KEY 'seasonstartdate'             VALUE a.seasonstartdate
+            ,KEY 'seasonenddate'               VALUE a.seasonenddate
+            ,KEY 'pollutantindicator'          VALUE a.pollutantindicator
+            ,KEY 'cyclescheduledfortmdl'       VALUE a.cyclescheduledfortmdl
+            ,KEY 'cycleexpectedtoattain'       VALUE a.cycleexpectedtoattain
+            ,KEY 'cwa303dpriorityranking'      VALUE a.cwa303dpriorityranking
+            ,KEY 'vision303dpriority'          VALUE a.vision303dpriority
+            ,KEY 'alternatelistingidentifier'  VALUE a.alternatelistingidentifier
+            ,KEY 'consentdecreecycle'          VALUE a.consentdecreecycle
+            ,KEY 'associatedactionstatus'      VALUE a.associatedactionstatus
+            ,KEY 'associatedactionagency'      VALUE a.associatedactionagency        
+         ) AS jout
+         FROM
+         attains_app.profile_assessments a
+         WHERE
+             a.row_id >  int_offset
+         AND a.row_id <= int_limit
+      )
+      LOOP
+         
+         IF boo_comma
+         THEN
+            IF NOT boo_mute
+            THEN
+               HTP.PRN(',');
+            
+            END IF;
+
+         ELSE
+            boo_comma := TRUE;
+            
+         END IF;
+
+         attains_eq.util.clob2htp(
+             p_input => json_rec.jout
+            ,p_mute  => boo_mute
+         );
+         
+      END LOOP;
+
+   END IF;
       
    -----------------------------------------------------------------------------
    -- Step 60
@@ -182,6 +361,36 @@ BEGIN
    IF NOT boo_mute
    THEN
       HTP.PRN(']');
+
+      IF ary_states IS NULL
+      THEN
+         str_slug := 'null';
+         
+      ELSE
+         str_slug := '"' || util.arystr2str(ary_states) || '"';
+         
+      END IF;
+      HTP.PRN(',"state":' || str_slug);
+
+      IF ary_orgids IS NULL
+      THEN
+         str_slug := 'null';
+         
+      ELSE
+         str_slug := '"' || util.arystr2str(ary_orgids) || '"';
+         
+      END IF;
+      HTP.PRN(',"organizationid":' || str_slug);
+      
+      IF ary_cycles IS NULL
+      THEN
+         str_slug := 'null';
+         
+      ELSE
+         str_slug := '"' || util.aryint2str(ary_cycles) || '"';
+         
+      END IF;
+      HTP.PRN(',"reportingcycle":' || str_slug);
       
       IF int_offset IS NULL
       THEN

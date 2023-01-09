@@ -5,7 +5,7 @@ AS
    -----------------------------------------------------------------------------
    FUNCTION str2integer(
       pin  IN  VARCHAR2
-   ) RETURN PLS_INTEGER
+   ) RETURN PLS_INTEGER DETERMINISTIC
    AS
      int_out PLS_INTEGER;
      
@@ -23,6 +23,151 @@ AS
          RAISE;
          
    END str2integer;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   FUNCTION str2arystr(
+      pin  IN  VARCHAR2
+   ) RETURN attains_eq.string_array DETERMINISTIC
+   AS
+      aryout attains_eq.string_array;
+
+   BEGIN
+      IF pin IS NULL
+      THEN
+         RETURN NULL;
+         
+      END IF;
+ 
+      aryout := gz_split(pin,',');
+      
+      IF aryout.COUNT = 0
+      THEN
+         aryout := NULL;
+         
+      END IF;
+      
+      RETURN aryout;
+   
+   END str2arystr;
+
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   FUNCTION arystr2str(
+      pin  IN  attains_eq.string_array
+   ) RETURN VARCHAR2 DETERMINISTIC
+   AS
+     str_out   VARCHAR2(32000 Char);
+     boo_comma BOOLEAN;
+
+   BEGIN
+      IF pin IS NULL
+      THEN
+         RETURN NULL;
+         
+      END IF;
+      
+      boo_comma := FALSE;
+      FOR i IN 1 .. pin.COUNT
+      LOOP
+         IF boo_comma
+         THEN
+            str_out := str_out || ',';
+         
+         ELSE
+            boo_comma := TRUE;
+
+         END IF;
+         
+         str_out := str_out || pin(i);
+
+      END LOOP;
+      
+      RETURN str_out;
+   
+   END arystr2str;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   FUNCTION str2aryint(
+      pin  IN  VARCHAR2
+   ) RETURN attains_eq.integer_array DETERMINISTIC
+   AS
+      arystr attains_eq.string_array;
+      aryout attains_eq.integer_array;
+      int_counter PLS_INTEGER;
+      int_val     INTEGER; 
+
+   BEGIN
+      IF pin IS NULL
+      THEN
+         RETURN NULL;
+         
+      END IF;
+      
+      aryout := attains_eq.integer_array();
+      arystr := gz_split(pin,',');
+      
+      int_counter := 0;
+      FOR i IN 1 .. arystr.COUNT
+      LOOP
+         int_val := str2integer(arystr(i));
+
+         IF int_val IS NOT NULL
+         THEN
+            int_counter := int_counter + 1;
+            aryout.EXTEND();
+            aryout(int_counter) := int_val;
+         
+         END IF;
+      
+      END LOOP; 
+
+      IF aryout.COUNT = 0
+      THEN
+         aryout := NULL;
+         
+      END IF;
+      
+      RETURN aryout;   
+   
+   END str2aryint;
+
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   FUNCTION aryint2str(
+      pin  IN  attains_eq.integer_array
+   ) RETURN VARCHAR2 DETERMINISTIC
+   AS
+     str_out   VARCHAR2(32000 Char);
+     boo_comma BOOLEAN;
+
+   BEGIN
+      IF pin IS NULL
+      THEN
+         RETURN NULL;
+         
+      END IF;
+      
+      boo_comma := FALSE;
+      FOR i IN 1 .. pin.COUNT
+      LOOP
+         IF boo_comma
+         THEN
+            str_out := str_out || ',';
+         
+         ELSE
+            boo_comma := TRUE;
+
+         END IF;
+         
+         str_out := str_out || TO_CHAR(pin(i));
+
+      END LOOP;
+      
+      RETURN str_out;
+   
+   END aryint2str;
 
    -----------------------------------------------------------------------------
    -----------------------------------------------------------------------------

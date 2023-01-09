@@ -1,5 +1,8 @@
 CREATE OR REPLACE PROCEDURE attains_eq.profile_tmdl(
-    p_offset                  IN  VARCHAR2 DEFAULT NULL
+    p_state                   IN  VARCHAR2 DEFAULT NULL
+   ,p_organizationid          IN  VARCHAR2 DEFAULT NULL
+   ,p_reportingcycle          IN  VARCHAR2 DEFAULT NULL
+   ,p_offset                  IN  VARCHAR2 DEFAULT NULL
    ,p_limit                   IN  VARCHAR2 DEFAULT NULL
    ,f                         IN  VARCHAR2 DEFAULT NULL
    ,api_key                   IN  VARCHAR2 DEFAULT NULL
@@ -7,7 +10,9 @@ CREATE OR REPLACE PROCEDURE attains_eq.profile_tmdl(
 AUTHID CURRENT_USER
 AS
    boo_mute                       BOOLEAN := FALSE;
-   
+   ary_states                     attains_eq.string_array;
+   ary_orgids                     attains_eq.string_array;
+   ary_cycles                     attains_eq.integer_array;
    int_offset                     PLS_INTEGER;
    int_limit                      PLS_INTEGER;
    boo_comma                      BOOLEAN;
@@ -19,6 +24,24 @@ BEGIN
    -- Step 10
    -- Check over incoming parameters
    -----------------------------------------------------------------------------
+   IF p_state IS NOT NULL
+   THEN
+      ary_states := util.str2arystr(p_state);
+      
+   END IF;
+   
+   IF p_organizationid IS NOT NULL
+   THEN
+      ary_orgids := util.str2arystr(p_organizationid);
+      
+   END IF;
+   
+   IF p_reportingcycle IS NOT NULL
+   THEN
+      ary_cycles := util.str2aryint(p_reportingcycle);
+      
+   END IF;
+   
    int_offset := util.str2integer(p_offset);
    int_limit  := util.str2integer(p_limit);
 
@@ -88,69 +111,179 @@ BEGIN
    -----------------------------------------------------------------------------
    boo_comma := FALSE;
    
-   FOR json_rec IN ( 
-      SELECT /*+ INDEX(PROFILE_TMDL_UX1) NO_PARALLEL(a) */ 
-      JSON_OBJECT(
-          KEY 'objectid'                    VALUE CAST(a.row_id AS INTEGER)
-         ,KEY 'state'                       VALUE a.state
-         ,KEY 'region'                      VALUE a.region
-         ,KEY 'organizationid'              VALUE a.organizationid
-         ,KEY 'organizationname'            VALUE a.organizationname
-         ,KEY 'organizationtype'            VALUE a.organizationtype
-         ,KEY 'reportingcycle'              VALUE a.reportingcycle
-         ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
-         ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
-         ,KEY 'actionid'                    VALUE a.actionid 
-         ,KEY 'actionname'                  VALUE a.actionname
-         ,KEY 'completiondate'              VALUE a.completiondate
-         ,KEY 'tmdldate'                    VALUE a.tmdldate
-         ,KEY 'fiscalyearestablished'       VALUE a.fiscalyearestablished
-         ,KEY 'pollutant'                   VALUE a.pollutant
-         ,KEY 'sourcetype'                  VALUE a.sourcetype
-         ,KEY 'addressedparameter'          VALUE a.addressedparameter
-         ,KEY 'locationdescription'         VALUE a.locationdescription
-         ,KEY 'watertype'                   VALUE a.watertype
-         ,KEY 'watersize'                   VALUE a.watersize
-         ,KEY 'watersizeunits'              VALUE a.watersizeunits
-         ,KEY 'actionagency'                VALUE a.actionagency
-         ,KEY 'loadallocation'              VALUE a.loadallocation
-         ,KEY 'loadallocationunits'         VALUE a.loadallocationunits
-         ,KEY 'explicitmarginofsafety'      VALUE a.explicitmarginofsafety
-         ,KEY 'implicitmarginofsafety'      VALUE a.implicitmarginofsafety
-         ,KEY 'tmdlendpoint'                VALUE a.tmdlendpoint
-         ,KEY 'npdesidentifier'             VALUE a.npdesidentifier
-         ,KEY 'otheridentifier'             VALUE a.otheridentifier
-         ,KEY 'wasteloadallocation'         VALUE a.wasteloadallocation
-         ,KEY 'inindiancountry'             VALUE a.inindiancountry
-         ,KEY 'includeinmeasure'            VALUE a.includeinmeasure
-      ) AS jout
-      FROM
-      attains_app.profile_tmdl a
-      WHERE
-          a.row_id >  int_offset
-      AND a.row_id <= int_limit
-   )
-   LOOP
-      
-      IF boo_comma
-      THEN
-         IF NOT boo_mute
-         THEN
-            HTP.PRN(',');
+   IF ary_states IS NOT NULL
+   OR ary_orgids IS NOT NULL
+   OR ary_cycles IS NOT NULL
+   THEN
+      FOR json_rec IN ( 
+         SELECT 
+         JSON_OBJECT(
+             KEY 'objectid'                    VALUE a.objectid
+            ,KEY 'state'                       VALUE a.state
+            ,KEY 'region'                      VALUE a.region
+            ,KEY 'organizationid'              VALUE a.organizationid
+            ,KEY 'organizationname'            VALUE a.organizationname
+            ,KEY 'organizationtype'            VALUE a.organizationtype
+            ,KEY 'reportingcycle'              VALUE a.reportingcycle
+            ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
+            ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
+            ,KEY 'actionid'                    VALUE a.actionid 
+            ,KEY 'actionname'                  VALUE a.actionname
+            ,KEY 'completiondate'              VALUE a.completiondate
+            ,KEY 'tmdldate'                    VALUE a.tmdldate
+            ,KEY 'fiscalyearestablished'       VALUE a.fiscalyearestablished
+            ,KEY 'pollutant'                   VALUE a.pollutant
+            ,KEY 'sourcetype'                  VALUE a.sourcetype
+            ,KEY 'addressedparameter'          VALUE a.addressedparameter
+            ,KEY 'locationdescription'         VALUE a.locationdescription
+            ,KEY 'watertype'                   VALUE a.watertype
+            ,KEY 'watersize'                   VALUE a.watersize
+            ,KEY 'watersizeunits'              VALUE a.watersizeunits
+            ,KEY 'actionagency'                VALUE a.actionagency
+            ,KEY 'loadallocation'              VALUE a.loadallocation
+            ,KEY 'loadallocationunits'         VALUE a.loadallocationunits
+            ,KEY 'explicitmarginofsafety'      VALUE a.explicitmarginofsafety
+            ,KEY 'implicitmarginofsafety'      VALUE a.implicitmarginofsafety
+            ,KEY 'tmdlendpoint'                VALUE a.tmdlendpoint
+            ,KEY 'npdesidentifier'             VALUE a.npdesidentifier
+            ,KEY 'otheridentifier'             VALUE a.otheridentifier
+            ,KEY 'wasteloadallocation'         VALUE a.wasteloadallocation
+            ,KEY 'inindiancountry'             VALUE a.inindiancountry
+            ,KEY 'includeinmeasure'            VALUE a.includeinmeasure
+         ) AS jout
+         FROM (
+            SELECT
+             CAST(rownum AS INTEGER) AS objectid
+            ,aa.state
+            ,aa.region
+            ,aa.organizationid
+            ,aa.organizationname
+            ,aa.organizationtype
+            ,aa.reportingcycle
+            ,aa.assessmentunitid
+            ,aa.assessmentunitname
+            ,aa.actionid 
+            ,aa.actionname
+            ,aa.completiondate
+            ,aa.tmdldate
+            ,aa.fiscalyearestablished
+            ,aa.pollutant
+            ,aa.sourcetype
+            ,aa.addressedparameter
+            ,aa.locationdescription
+            ,aa.watertype
+            ,aa.watersize
+            ,aa.watersizeunits
+            ,aa.actionagency
+            ,aa.loadallocation
+            ,aa.loadallocationunits
+            ,aa.explicitmarginofsafety
+            ,aa.implicitmarginofsafety
+            ,aa.tmdlendpoint
+            ,aa.npdesidentifier
+            ,aa.otheridentifier
+            ,aa.wasteloadallocation
+            ,aa.inindiancountry
+            ,aa.includeinmeasure
+            FROM
+            attains_app.profile_tmdl aa
+            WHERE
+                ( ary_states IS NULL OR aa.state          IN (SELECT column_value FROM TABLE(ary_states)) )
+            AND ( ary_orgids IS NULL OR aa.organizationid IN (SELECT column_value FROM TABLE(ary_orgids)) )
+            AND ( ary_cycles IS NULL OR aa.reportingcycle IN (SELECT column_value FROM TABLE(ary_cycles)) )
+            ORDER BY
+            aa.row_id
+            OFFSET int_offset ROWS FETCH NEXT int_limit ROWS ONLY
+         ) a
+      )
+      LOOP
          
+         IF boo_comma
+         THEN
+            IF NOT boo_mute
+            THEN
+               HTP.PRN(',');
+            
+            END IF;
+
+         ELSE
+            boo_comma := TRUE;
+            
          END IF;
 
-      ELSE
-         boo_comma := TRUE;
+         attains_eq.util.clob2htp(
+             p_input => json_rec.jout
+            ,p_mute  => boo_mute
+         );
          
-      END IF;
-
-      attains_eq.util.clob2htp(
-          p_input => json_rec.jout
-         ,p_mute  => boo_mute
-      );
+      END LOOP;
       
-   END LOOP;
+   ELSE
+      FOR json_rec IN ( 
+         SELECT /*+ INDEX(PROFILE_TMDL_UX1) NO_PARALLEL(a) */ 
+         JSON_OBJECT(
+             KEY 'objectid'                    VALUE CAST(a.row_id AS INTEGER)
+            ,KEY 'state'                       VALUE a.state
+            ,KEY 'region'                      VALUE a.region
+            ,KEY 'organizationid'              VALUE a.organizationid
+            ,KEY 'organizationname'            VALUE a.organizationname
+            ,KEY 'organizationtype'            VALUE a.organizationtype
+            ,KEY 'reportingcycle'              VALUE a.reportingcycle
+            ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
+            ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
+            ,KEY 'actionid'                    VALUE a.actionid 
+            ,KEY 'actionname'                  VALUE a.actionname
+            ,KEY 'completiondate'              VALUE a.completiondate
+            ,KEY 'tmdldate'                    VALUE a.tmdldate
+            ,KEY 'fiscalyearestablished'       VALUE a.fiscalyearestablished
+            ,KEY 'pollutant'                   VALUE a.pollutant
+            ,KEY 'sourcetype'                  VALUE a.sourcetype
+            ,KEY 'addressedparameter'          VALUE a.addressedparameter
+            ,KEY 'locationdescription'         VALUE a.locationdescription
+            ,KEY 'watertype'                   VALUE a.watertype
+            ,KEY 'watersize'                   VALUE a.watersize
+            ,KEY 'watersizeunits'              VALUE a.watersizeunits
+            ,KEY 'actionagency'                VALUE a.actionagency
+            ,KEY 'loadallocation'              VALUE a.loadallocation
+            ,KEY 'loadallocationunits'         VALUE a.loadallocationunits
+            ,KEY 'explicitmarginofsafety'      VALUE a.explicitmarginofsafety
+            ,KEY 'implicitmarginofsafety'      VALUE a.implicitmarginofsafety
+            ,KEY 'tmdlendpoint'                VALUE a.tmdlendpoint
+            ,KEY 'npdesidentifier'             VALUE a.npdesidentifier
+            ,KEY 'otheridentifier'             VALUE a.otheridentifier
+            ,KEY 'wasteloadallocation'         VALUE a.wasteloadallocation
+            ,KEY 'inindiancountry'             VALUE a.inindiancountry
+            ,KEY 'includeinmeasure'            VALUE a.includeinmeasure
+         ) AS jout
+         FROM
+         attains_app.profile_tmdl a
+         WHERE
+             a.row_id >  int_offset
+         AND a.row_id <= int_limit
+      )
+      LOOP
+         
+         IF boo_comma
+         THEN
+            IF NOT boo_mute
+            THEN
+               HTP.PRN(',');
+            
+            END IF;
+
+         ELSE
+            boo_comma := TRUE;
+            
+         END IF;
+
+         attains_eq.util.clob2htp(
+             p_input => json_rec.jout
+            ,p_mute  => boo_mute
+         );
+         
+      END LOOP;
+
+   END IF;
       
    -----------------------------------------------------------------------------
    -- Step 60
@@ -159,6 +292,36 @@ BEGIN
    IF NOT boo_mute
    THEN
       HTP.PRN(']');
+      
+      IF ary_states IS NULL
+      THEN
+         str_slug := 'null';
+         
+      ELSE
+         str_slug := '"' || util.arystr2str(ary_states) || '"';
+         
+      END IF;
+      HTP.PRN(',"state":' || str_slug);
+
+      IF ary_orgids IS NULL
+      THEN
+         str_slug := 'null';
+         
+      ELSE
+         str_slug := '"' || util.arystr2str(ary_orgids) || '"';
+         
+      END IF;
+      HTP.PRN(',"organizationid":' || str_slug);
+      
+      IF ary_cycles IS NULL
+      THEN
+         str_slug := 'null';
+         
+      ELSE
+         str_slug := '"' || util.aryint2str(ary_cycles) || '"';
+         
+      END IF;
+      HTP.PRN(',"reportingcycle":' || str_slug);
       
       IF int_offset IS NULL
       THEN
