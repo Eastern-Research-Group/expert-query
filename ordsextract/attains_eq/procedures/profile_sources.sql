@@ -143,37 +143,37 @@ BEGIN
            || '   ,KEY ''watersize''                   VALUE a.watersize '
            || '   ,KEY ''watersizeunits''              VALUE a.watersizeunits '  
            || ') AS jout '
-           || 'FROM ( ';
+           || 'FROM ( '
+           || 'SELECT '
+           || '    CAST(aa.row_id AS INTEGER) AS objectid '
+           || '   ,aa.state '
+           || '   ,aa.region '
+           || '   ,aa.organizationid '
+           || '   ,aa.organizationname '
+           || '   ,aa.organizationtype '
+           || '   ,aa.reportingcycle '
+           || '   ,aa.assessmentunitid '
+           || '   ,aa.assessmentunitname '
+           || '   ,aa.overallstatus '
+           || '   ,aa.epaircategory '
+           || '   ,aa.stateircategory '
+           || '   ,aa.sourcename '
+           || '   ,aa.confirmed '
+           || '   ,aa.parametergroup '
+           || '   ,aa.causename '
+           || '   ,aa.locationdescription '
+           || '   ,aa.watertype '
+           || '   ,aa.watersize '
+           || '   ,aa.watersizeunits '
+           || '   FROM '
+           || '   attains_app.profile_sources aa '
+           || '   WHERE ';
            
    IF ary_states IS NOT NULL
    OR ary_orgids IS NOT NULL
    OR ary_cycles IS NOT NULL
    THEN
       str_sql := str_sql
-              || 'SELECT '
-              || ' CAST(rownum AS INTEGER) AS objectid '
-              || ',aa.state '
-              || ',aa.region '
-              || ',aa.organizationid '
-              || ',aa.organizationname '
-              || ',aa.organizationtype '
-              || ',aa.reportingcycle '
-              || ',aa.assessmentunitid '
-              || ',aa.assessmentunitname '
-              || ',aa.overallstatus '
-              || ',aa.epaircategory '
-              || ',aa.stateircategory '
-              || ',aa.sourcename '
-              || ',aa.confirmed '
-              || ',aa.parametergroup '
-              || ',aa.causename '
-              || ',aa.locationdescription '
-              || ',aa.watertype '
-              || ',aa.watersize '
-              || ',aa.watersizeunits '
-              || 'FROM '
-              || 'attains_app.profile_sources aa '
-              || 'WHERE '
               || '    1 = 1 ';
               
       IF ary_states IS NOT NULL
@@ -198,8 +198,6 @@ BEGIN
       END IF;
               
       str_sql := str_sql 
-              || 'ORDER BY '
-              || 'aa.row_id '
               || 'OFFSET :p04 ROWS FETCH NEXT :p05 ROWS ONLY '
               || ') a';
      
@@ -231,30 +229,6 @@ BEGIN
 
    ELSE
       str_sql := str_sql
-              || 'SELECT '
-              || ' CAST(aa.row_id AS INTEGER) AS objectid '
-              || ',aa.state '
-              || ',aa.region '
-              || ',aa.organizationid '
-              || ',aa.organizationname '
-              || ',aa.organizationtype '
-              || ',aa.reportingcycle '
-              || ',aa.assessmentunitid '
-              || ',aa.assessmentunitname '
-              || ',aa.overallstatus '
-              || ',aa.epaircategory '
-              || ',aa.stateircategory '
-              || ',aa.sourcename '
-              || ',aa.confirmed '
-              || ',aa.parametergroup '
-              || ',aa.causename '
-              || ',aa.locationdescription '
-              || ',aa.watertype '
-              || ',aa.watersize '
-              || ',aa.watersizeunits '
-              || 'FROM '
-              || 'attains_app.profile_sources aa '
-              || 'WHERE '
               || '    aa.row_id >  :p01 '
               || 'AND aa.row_id <= :p02 '
               || ') a';

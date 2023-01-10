@@ -1,6 +1,7 @@
 CREATE OR REPLACE PROCEDURE attains_eq.profile_actions(
     p_state                   IN  VARCHAR2 DEFAULT NULL
    ,p_organizationid          IN  VARCHAR2 DEFAULT NULL
+   ,p_reportingcycle          IN  VARCHAR2 DEFAULT NULL
    ,p_offset                  IN  VARCHAR2 DEFAULT NULL
    ,p_limit                   IN  VARCHAR2 DEFAULT NULL
    ,f                         IN  VARCHAR2 DEFAULT NULL
@@ -136,36 +137,36 @@ BEGIN
            || '   ,KEY ''includeinmeasure''            VALUE a.includeinmeasure '
            || '   RETURNING CLOB '         
            || ') AS jout '
-           || 'FROM ( ';
+           || 'FROM ( '
+           || '   SELECT '
+           || '    CAST(aa.row_id AS INTEGER) AS objectid '
+           || '   ,aa.state '
+           || '   ,aa.region '
+           || '   ,aa.organizationid '
+           || '   ,aa.organizationname '
+           || '   ,aa.organizationtype '
+           || '   ,aa.assessmentunitid '
+           || '   ,aa.assessmentunitname '
+           || '   ,aa.actionid '
+           || '   ,aa.actionname '
+           || '   ,aa.completiondate '
+           || '   ,aa.parameter '
+           || '   ,aa.locationdescription '
+           || '   ,aa.actiontype '
+           || '   ,aa.watertype '
+           || '   ,aa.watersize '
+           || '   ,aa.watersizeunits '
+           || '   ,aa.actionagency '
+           || '   ,aa.inindiancountry '
+           || '   ,aa.includeinmeasure '
+           || '   FROM '
+           || '   attains_app.profile_actions aa '
+           || '   WHERE ';
 
    IF ary_states IS NOT NULL
    OR ary_orgids IS NOT NULL
    THEN
       str_sql := str_sql
-              || 'SELECT '
-              || ' CAST(rownum AS INTEGER) AS objectid '
-              || ',aa.state '
-              || ',aa.region '
-              || ',aa.organizationid '
-              || ',aa.organizationname '
-              || ',aa.organizationtype '
-              || ',aa.assessmentunitid '
-              || ',aa.assessmentunitname '
-              || ',aa.actionid '
-              || ',aa.actionname '
-              || ',aa.completiondate '
-              || ',aa.parameter '
-              || ',aa.locationdescription '
-              || ',aa.actiontype '
-              || ',aa.watertype '
-              || ',aa.watersize '
-              || ',aa.watersizeunits '
-              || ',aa.actionagency '
-              || ',aa.inindiancountry '
-              || ',aa.includeinmeasure '
-              || 'FROM '
-              || 'attains_app.profile_actions aa '
-              || 'WHERE '
               || '    1 = 1 ';
 
       IF ary_states IS NOT NULL
@@ -183,8 +184,6 @@ BEGIN
       END IF;
               
       str_sql := str_sql 
-              || 'ORDER BY '
-              || 'aa.row_id '
               || 'OFFSET :p03 ROWS FETCH NEXT :p04 ROWS ONLY '
               || ') a';
      
@@ -210,30 +209,6 @@ BEGIN
    
    ELSE
       str_sql := str_sql
-              || 'SELECT '
-              || ' CAST(aa.row_id AS INTEGER) AS objectid '
-              || ',aa.state '
-              || ',aa.region '
-              || ',aa.organizationid '
-              || ',aa.organizationname '
-              || ',aa.organizationtype '
-              || ',aa.assessmentunitid '
-              || ',aa.assessmentunitname '
-              || ',aa.actionid '
-              || ',aa.actionname '
-              || ',aa.completiondate '
-              || ',aa.parameter '
-              || ',aa.locationdescription '
-              || ',aa.actiontype '
-              || ',aa.watertype '
-              || ',aa.watersize '
-              || ',aa.watersizeunits '
-              || ',aa.actionagency '
-              || ',aa.inindiancountry '
-              || ',aa.includeinmeasure '
-              || 'FROM '
-              || 'attains_app.profile_actions aa '
-              || 'WHERE '
               || '    aa.row_id >  :p01 '
               || 'AND aa.row_id <= :p02 '
               || ') a';
