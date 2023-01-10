@@ -275,24 +275,6 @@ BEGIN
      
       num_curid := DBMS_SQL.OPEN_CURSOR;
       DBMS_SQL.PARSE(num_curid,str_sql,DBMS_SQL.NATIVE);
-      
-      IF ary_states IS NOT NULL
-      THEN
-         DBMS_SQL.BIND_VARIABLE(num_curid,'p01',ary_states);
-      
-      END IF;
-
-      IF ary_orgids IS NOT NULL
-      THEN
-         DBMS_SQL.BIND_VARIABLE(num_curid,'p02',ary_orgids);
-      
-      END IF;
-
-      IF ary_cycles IS NOT NULL
-      THEN
-         DBMS_SQL.BIND_VARIABLE(num_curid,'p03',ary_cycles);
-      
-      END IF;
 
       DBMS_SQL.BIND_VARIABLE(num_curid,'p04',int_offset);
       DBMS_SQL.BIND_VARIABLE(num_curid,'p05',int_limit);
