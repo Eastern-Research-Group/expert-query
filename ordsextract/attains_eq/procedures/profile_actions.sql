@@ -15,6 +15,17 @@ AS
    int_limit                      PLS_INTEGER;
    boo_comma                      BOOLEAN;
    str_slug                       VARCHAR2(4000 Char);
+   str_sql                        VARCHAR2(32000 Char);
+   curs_ref                       SYS_REFCURSOR;
+   num_curid                      NUMBER;
+   int_dummy                      PLS_INTEGER;
+
+   TYPE rec_json IS RECORD(
+      results CLOB
+   );
+   TYPE tbl_json IS TABLE OF rec_json
+   INDEX BY PLS_INTEGER;
+   ary_json tbl_json;
    
 BEGIN
 
@@ -67,8 +78,8 @@ BEGIN
    -- Step 20
    -- Do the header verification check
    -----------------------------------------------------------------------------
-   IF NOT attains_eq.header_check()
-   THEN
+   IF NOT attains_eq.header_check(api_key)
+   THEN 
       OWA_UTIL.MIME_HEADER('test/html',FALSE);
       OWA_UTIL.STATUS_LINE(401,'Unauthorized',FALSE);
       OWA_UTIL.HTTP_HEADER_CLOSE;
@@ -96,74 +107,153 @@ BEGIN
       HTP.PRN('{"name":"profile_actions","records":[');
       
    END IF;
-
+   
    -----------------------------------------------------------------------------
    -- Step 50
+   -- Generate the SQL
+   -----------------------------------------------------------------------------
+   str_sql := 'SELECT '
+           || 'JSON_OBJECT( '
+           || '    KEY ''objectid''                    VALUE a.objectid '
+           || '   ,KEY ''state''                       VALUE a.state '
+           || '   ,KEY ''region''                      VALUE a.region '
+           || '   ,KEY ''organizationid''              VALUE a.organizationid '
+           || '   ,KEY ''organizationname''            VALUE a.organizationname '
+           || '   ,KEY ''organizationtype''            VALUE a.organizationtype '
+           || '   ,KEY ''assessmentunitid''            VALUE a.assessmentunitid '
+           || '   ,KEY ''assessmentunitname''          VALUE a.assessmentunitname '
+           || '   ,KEY ''actionid''                    VALUE a.actionid '
+           || '   ,KEY ''actionname''                  VALUE a.actionname '
+           || '   ,KEY ''completiondate''              VALUE a.completiondate '
+           || '   ,KEY ''parameter''                   VALUE a.parameter '
+           || '   ,KEY ''locationdescription''         VALUE a.locationdescription '
+           || '   ,KEY ''actiontype''                  VALUE a.actiontype '
+           || '   ,KEY ''watertype''                   VALUE a.watertype '
+           || '   ,KEY ''watersize''                   VALUE a.watersize '
+           || '   ,KEY ''watersizeunits''              VALUE a.watersizeunits '
+           || '   ,KEY ''actionagency''                VALUE a.actionagency '
+           || '   ,KEY ''inindiancountry''             VALUE a.inindiancountry '
+           || '   ,KEY ''includeinmeasure''            VALUE a.includeinmeasure '
+           || '   RETURNING CLOB '         
+           || ') AS jout '
+           || 'FROM ( ';
+
+   IF ary_states IS NOT NULL
+   OR ary_orgids IS NOT NULL
+   THEN
+      str_sql := str_sql
+              || 'SELECT '
+              || ' CAST(rownum AS INTEGER) AS objectid '
+              || ',aa.state '
+              || ',aa.region '
+              || ',aa.organizationid '
+              || ',aa.organizationname '
+              || ',aa.organizationtype '
+              || ',aa.assessmentunitid '
+              || ',aa.assessmentunitname '
+              || ',aa.actionid '
+              || ',aa.actionname '
+              || ',aa.completiondate '
+              || ',aa.parameter '
+              || ',aa.locationdescription '
+              || ',aa.actiontype '
+              || ',aa.watertype '
+              || ',aa.watersize '
+              || ',aa.watersizeunits '
+              || ',aa.actionagency '
+              || ',aa.inindiancountry '
+              || ',aa.includeinmeasure '
+              || 'FROM '
+              || 'attains_app.profile_actions aa '
+              || 'WHERE '
+              || '    1 = 1 ';
+
+      IF ary_states IS NOT NULL
+      THEN
+         str_sql := str_sql        
+                 || 'AND aa.state IN (SELECT column_value FROM TABLE(:p01)) ';
+                 
+      END IF;
+      
+      IF ary_orgids IS NOT NULL
+      THEN
+         str_sql := str_sql        
+                 || 'AND aa.organizationid IN (SELECT column_value FROM TABLE(:p02)) ';
+                 
+      END IF;
+              
+      str_sql := str_sql 
+              || 'ORDER BY '
+              || 'aa.row_id '
+              || 'OFFSET :p03 ROWS FETCH NEXT :p04 ROWS ONLY '
+              || ') a';
+     
+      num_curid := DBMS_SQL.OPEN_CURSOR;
+      DBMS_SQL.PARSE(num_curid,str_sql,DBMS_SQL.NATIVE);
+      
+      IF ary_states IS NOT NULL
+      THEN
+         DBMS_SQL.BIND_VARIABLE(num_curid,'p01',ary_states);
+      
+      END IF;
+
+      IF ary_orgids IS NOT NULL
+      THEN
+         DBMS_SQL.BIND_VARIABLE(num_curid,'p02',ary_orgids);
+      
+      END IF;
+
+      DBMS_SQL.BIND_VARIABLE(num_curid,'p03',int_offset);
+      DBMS_SQL.BIND_VARIABLE(num_curid,'p04',int_limit);
+      int_dummy := DBMS_SQL.EXECUTE(num_curid);    
+      curs_ref := DBMS_SQL.TO_REFCURSOR(num_curid);
+   
+   ELSE
+      str_sql := str_sql
+              || 'SELECT '
+              || ' CAST(aa.row_id AS INTEGER) AS objectid '
+              || ',aa.state '
+              || ',aa.region '
+              || ',aa.organizationid '
+              || ',aa.organizationname '
+              || ',aa.organizationtype '
+              || ',aa.assessmentunitid '
+              || ',aa.assessmentunitname '
+              || ',aa.actionid '
+              || ',aa.actionname '
+              || ',aa.completiondate '
+              || ',aa.parameter '
+              || ',aa.locationdescription '
+              || ',aa.actiontype '
+              || ',aa.watertype '
+              || ',aa.watersize '
+              || ',aa.watersizeunits '
+              || ',aa.actionagency '
+              || ',aa.inindiancountry '
+              || ',aa.includeinmeasure '
+              || 'FROM '
+              || 'attains_app.profile_actions aa '
+              || 'WHERE '
+              || '    aa.row_id >  :p01 '
+              || 'AND aa.row_id <= :p02 '
+              || ') a';
+
+      OPEN curs_ref FOR str_sql USING int_offset,int_limit;
+
+   END IF;
+   
+   -----------------------------------------------------------------------------
+   -- Step 60
    -- Loop through the records
    -----------------------------------------------------------------------------
    boo_comma := FALSE;
    
-   IF ary_states IS NOT NULL
-   OR ary_orgids IS NOT NULL
-   THEN
-      FOR json_rec IN (
-         SELECT
-         JSON_OBJECT(
-             KEY 'objectid'                    VALUE a.objectid
-            ,KEY 'state'                       VALUE a.state
-            ,KEY 'region'                      VALUE a.region
-            ,KEY 'organizationid'              VALUE a.organizationid
-            ,KEY 'organizationname'            VALUE a.organizationname
-            ,KEY 'organizationtype'            VALUE a.organizationtype
-            ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
-            ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
-            ,KEY 'actionid'                    VALUE a.actionid
-            ,KEY 'actionname'                  VALUE a.actionname
-            ,KEY 'completiondate'              VALUE a.completiondate
-            ,KEY 'parameter'                   VALUE a.parameter
-            ,KEY 'locationdescription'         VALUE a.locationdescription
-            ,KEY 'actiontype'                  VALUE a.actiontype
-            ,KEY 'watertype'                   VALUE a.watertype
-            ,KEY 'watersize'                   VALUE a.watersize
-            ,KEY 'watersizeunits'              VALUE a.watersizeunits
-            ,KEY 'actionagency'                VALUE a.actionagency
-            ,KEY 'inindiancountry'             VALUE a.inindiancountry
-            ,KEY 'includeinmeasure'            VALUE a.includeinmeasure           
-         ) AS jout
-         FROM (
-            SELECT
-             CAST(rownum AS INTEGER) AS objectid
-            ,aa.state
-            ,aa.region
-            ,aa.organizationid
-            ,aa.organizationname
-            ,aa.organizationtype
-            ,aa.assessmentunitid
-            ,aa.assessmentunitname
-            ,aa.actionid
-            ,aa.actionname
-            ,aa.completiondate
-            ,aa.parameter
-            ,aa.locationdescription
-            ,aa.actiontype
-            ,aa.watertype
-            ,aa.watersize
-            ,aa.watersizeunits
-            ,aa.actionagency
-            ,aa.inindiancountry
-            ,aa.includeinmeasure
-            FROM
-            attains_app.profile_actions aa
-            WHERE
-                ( ary_states IS NULL OR aa.state          IN (SELECT column_value FROM TABLE(ary_states)) )
-            AND ( ary_orgids IS NULL OR aa.organizationid IN (SELECT column_value FROM TABLE(ary_orgids)) )
-            ORDER BY
-            aa.row_id
-            OFFSET int_offset ROWS FETCH NEXT int_limit ROWS ONLY
-         ) a
-      )
+   LOOP
+      FETCH curs_ref BULK COLLECT INTO ary_json LIMIT 10000;
+      EXIT WHEN curs_ref%NOTFOUND;
+
+      FOR i IN 1 .. ary_json.COUNT
       LOOP
-         
          IF boo_comma
          THEN
             IF NOT boo_mute
@@ -178,70 +268,16 @@ BEGIN
          END IF;
 
          attains_eq.util.clob2htp(
-             p_input => json_rec.jout
+             p_input => ary_json(i).results
             ,p_mute  => boo_mute
          );
          
       END LOOP;
       
-   ELSE
-      FOR json_rec IN ( 
-         SELECT /*+ INDEX(PROFILE_ACTIONS_UX1) NO_PARALLEL(a) */ 
-         JSON_OBJECT(
-             KEY 'objectid'                    VALUE CAST(a.row_id AS INTEGER)
-            ,KEY 'state'                       VALUE a.state
-            ,KEY 'region'                      VALUE a.region
-            ,KEY 'organizationid'              VALUE a.organizationid
-            ,KEY 'organizationname'            VALUE a.organizationname
-            ,KEY 'organizationtype'            VALUE a.organizationtype
-            ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
-            ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
-            ,KEY 'actionid'                    VALUE a.actionid
-            ,KEY 'actionname'                  VALUE a.actionname
-            ,KEY 'completiondate'              VALUE a.completiondate
-            ,KEY 'parameter'                   VALUE a.parameter
-            ,KEY 'locationdescription'         VALUE a.locationdescription
-            ,KEY 'actiontype'                  VALUE a.actiontype
-            ,KEY 'watertype'                   VALUE a.watertype
-            ,KEY 'watersize'                   VALUE a.watersize
-            ,KEY 'watersizeunits'              VALUE a.watersizeunits
-            ,KEY 'actionagency'                VALUE a.actionagency
-            ,KEY 'inindiancountry'             VALUE a.inindiancountry
-            ,KEY 'includeinmeasure'            VALUE a.includeinmeasure
-            
-         ) AS jout
-         FROM
-         attains_app.profile_actions a
-         WHERE
-             a.row_id >  int_offset
-         AND a.row_id <= int_limit
-      )
-      LOOP
-         
-         IF boo_comma
-         THEN
-            IF NOT boo_mute
-            THEN
-               HTP.PRN(',');
-            
-            END IF;
-
-         ELSE
-            boo_comma := TRUE;
-            
-         END IF;
-
-         attains_eq.util.clob2htp(
-             p_input => json_rec.jout
-            ,p_mute  => boo_mute
-         );
-         
-      END LOOP;
-      
-   END IF;
+   END LOOP;
       
    -----------------------------------------------------------------------------
-   -- Step 60
+   -- Step 70
    -- Close the response
    -----------------------------------------------------------------------------
    IF NOT boo_mute

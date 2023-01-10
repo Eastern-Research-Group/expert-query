@@ -17,6 +17,17 @@ AS
    int_limit                      PLS_INTEGER;
    boo_comma                      BOOLEAN;
    str_slug                       VARCHAR2(4000 Char);
+   str_sql                        VARCHAR2(32000 Char);
+   curs_ref                       SYS_REFCURSOR;
+   num_curid                      NUMBER;
+   int_dummy                      PLS_INTEGER;
+
+   TYPE rec_json IS RECORD(
+      results CLOB
+   );
+   TYPE tbl_json IS TABLE OF rec_json
+   INDEX BY PLS_INTEGER;
+   ary_json tbl_json;
    
 BEGIN
 
@@ -75,7 +86,7 @@ BEGIN
    -- Step 20
    -- Do the header verification check
    -----------------------------------------------------------------------------
-   IF NOT attains_eq.header_check()
+   IF NOT attains_eq.header_check(api_key)
    THEN
       OWA_UTIL.MIME_HEADER('test/html',FALSE);
       OWA_UTIL.STATUS_LINE(401,'Unauthorized',FALSE);
@@ -104,76 +115,166 @@ BEGIN
       HTP.PRN('{"name":"profile_sources","records":[');
       
    END IF;
-
+   
    -----------------------------------------------------------------------------
    -- Step 50
-   -- Loop through the records
+   -- Generate the SQL
    -----------------------------------------------------------------------------
-   boo_comma := FALSE;
-   
+   str_sql := 'SELECT '
+           || 'JSON_OBJECT( '
+           || '    KEY ''objectid''                    VALUE a.objectid '
+           || '   ,KEY ''state''                       VALUE a.state '
+           || '   ,KEY ''region''                      VALUE a.region '
+           || '   ,KEY ''organizationid''              VALUE a.organizationid '
+           || '   ,KEY ''organizationname''            VALUE a.organizationname '
+           || '   ,KEY ''organizationtype''            VALUE a.organizationtype '
+           || '   ,KEY ''reportingcycle''              VALUE a.reportingcycle '
+           || '   ,KEY ''assessmentunitid''            VALUE a.assessmentunitid '
+           || '   ,KEY ''assessmentunitname''          VALUE a.assessmentunitname '
+           || '   ,KEY ''overallstatus''               VALUE a.overallstatus '
+           || '   ,KEY ''epaircategory''               VALUE a.epaircategory '
+           || '   ,KEY ''stateircategory''             VALUE a.stateircategory '
+           || '   ,KEY ''sourcename''                  VALUE a.sourcename '
+           || '   ,KEY ''confirmed''                   VALUE a.confirmed '
+           || '   ,KEY ''parametergroup''              VALUE a.parametergroup '
+           || '   ,KEY ''causename''                   VALUE a.causename '
+           || '   ,KEY ''locationdescription''         VALUE a.locationdescription '
+           || '   ,KEY ''watertype''                   VALUE a.watertype '
+           || '   ,KEY ''watersize''                   VALUE a.watersize '
+           || '   ,KEY ''watersizeunits''              VALUE a.watersizeunits '  
+           || ') AS jout '
+           || 'FROM ( ';
+           
    IF ary_states IS NOT NULL
    OR ary_orgids IS NOT NULL
    OR ary_cycles IS NOT NULL
    THEN
-      FOR json_rec IN ( 
-         SELECT
-         JSON_OBJECT(
-             KEY 'objectid'                    VALUE a.objectid
-            ,KEY 'state'                       VALUE a.state
-            ,KEY 'region'                      VALUE a.region
-            ,KEY 'organizationid'              VALUE a.organizationid
-            ,KEY 'organizationname'            VALUE a.organizationname
-            ,KEY 'organizationtype'            VALUE a.organizationtype
-            ,KEY 'reportingcycle'              VALUE a.reportingcycle
-            ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
-            ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
-            ,KEY 'overallstatus'               VALUE a.overallstatus
-            ,KEY 'epaircategory'               VALUE a.epaircategory
-            ,KEY 'stateircategory'             VALUE a.stateircategory
-            ,KEY 'sourcename'                  VALUE a.sourcename
-            ,KEY 'confirmed'                   VALUE a.confirmed
-            ,KEY 'parametergroup'              VALUE a.parametergroup
-            ,KEY 'causename'                   VALUE a.causename
-            ,KEY 'locationdescription'         VALUE a.locationdescription
-            ,KEY 'watertype'                   VALUE a.watertype
-            ,KEY 'watersize'                   VALUE a.watersize
-            ,KEY 'watersizeunits'              VALUE a.watersizeunits
-         ) AS jout
-         FROM (
-            SELECT
-             CAST(rownum AS INTEGER) AS objectid
-            ,aa.state
-            ,aa.region
-            ,aa.organizationid
-            ,aa.organizationname
-            ,aa.organizationtype
-            ,aa.reportingcycle
-            ,aa.assessmentunitid
-            ,aa.assessmentunitname
-            ,aa.overallstatus
-            ,aa.epaircategory
-            ,aa.stateircategory
-            ,aa.sourcename
-            ,aa.confirmed
-            ,aa.parametergroup
-            ,aa.causename
-            ,aa.locationdescription
-            ,aa.watertype
-            ,aa.watersize
-            ,aa.watersizeunits
-            FROM
-            attains_app.profile_sources aa
-            WHERE
-                ( ary_states IS NULL OR aa.state          IN (SELECT column_value FROM TABLE(ary_states)) )
-            AND ( ary_orgids IS NULL OR aa.organizationid IN (SELECT column_value FROM TABLE(ary_orgids)) )
-            AND ( ary_cycles IS NULL OR aa.reportingcycle IN (SELECT column_value FROM TABLE(ary_cycles)) )
-            ORDER BY
-            aa.row_id
-            OFFSET int_offset ROWS FETCH NEXT int_limit ROWS ONLY
-         ) a
-      )
+      str_sql := str_sql
+              || 'SELECT '
+              || ' CAST(rownum AS INTEGER) AS objectid '
+              || ',aa.state '
+              || ',aa.region '
+              || ',aa.organizationid '
+              || ',aa.organizationname '
+              || ',aa.organizationtype '
+              || ',aa.reportingcycle '
+              || ',aa.assessmentunitid '
+              || ',aa.assessmentunitname '
+              || ',aa.overallstatus '
+              || ',aa.epaircategory '
+              || ',aa.stateircategory '
+              || ',aa.sourcename '
+              || ',aa.confirmed '
+              || ',aa.parametergroup '
+              || ',aa.causename '
+              || ',aa.locationdescription '
+              || ',aa.watertype '
+              || ',aa.watersize '
+              || ',aa.watersizeunits '
+              || 'FROM '
+              || 'attains_app.profile_sources aa '
+              || 'WHERE '
+              || '    1 = 1 ';
+              
+      IF ary_states IS NOT NULL
+      THEN
+         str_sql := str_sql        
+                 || 'AND aa.state IN (SELECT column_value FROM TABLE(:p01)) ';
+                 
+      END IF;
+      
+      IF ary_orgids IS NOT NULL
+      THEN
+         str_sql := str_sql        
+                 || 'AND aa.organizationid IN (SELECT column_value FROM TABLE(:p02)) ';
+                 
+      END IF;
+
+      IF ary_cycles IS NOT NULL
+      THEN
+         str_sql := str_sql        
+                 || 'AND aa.reportingcycle IN (SELECT column_value FROM TABLE(:p03)) ';
+                 
+      END IF;
+              
+      str_sql := str_sql 
+              || 'ORDER BY '
+              || 'aa.row_id '
+              || 'OFFSET :p04 ROWS FETCH NEXT :p05 ROWS ONLY '
+              || ') a';
+     
+      num_curid := DBMS_SQL.OPEN_CURSOR;
+      DBMS_SQL.PARSE(num_curid,str_sql,DBMS_SQL.NATIVE);
+      
+      IF ary_states IS NOT NULL
+      THEN
+         DBMS_SQL.BIND_VARIABLE(num_curid,'p01',ary_states);
+      
+      END IF;
+
+      IF ary_orgids IS NOT NULL
+      THEN
+         DBMS_SQL.BIND_VARIABLE(num_curid,'p02',ary_orgids);
+      
+      END IF;
+
+      IF ary_cycles IS NOT NULL
+      THEN
+         DBMS_SQL.BIND_VARIABLE(num_curid,'p03',ary_cycles);
+      
+      END IF;
+
+      DBMS_SQL.BIND_VARIABLE(num_curid,'p04',int_offset);
+      DBMS_SQL.BIND_VARIABLE(num_curid,'p05',int_limit);
+      int_dummy := DBMS_SQL.EXECUTE(num_curid);    
+      curs_ref := DBMS_SQL.TO_REFCURSOR(num_curid);
+
+   ELSE
+      str_sql := str_sql
+              || 'SELECT '
+              || ' CAST(aa.row_id AS INTEGER) AS objectid '
+              || ',aa.state '
+              || ',aa.region '
+              || ',aa.organizationid '
+              || ',aa.organizationname '
+              || ',aa.organizationtype '
+              || ',aa.reportingcycle '
+              || ',aa.assessmentunitid '
+              || ',aa.assessmentunitname '
+              || ',aa.overallstatus '
+              || ',aa.epaircategory '
+              || ',aa.stateircategory '
+              || ',aa.sourcename '
+              || ',aa.confirmed '
+              || ',aa.parametergroup '
+              || ',aa.causename '
+              || ',aa.locationdescription '
+              || ',aa.watertype '
+              || ',aa.watersize '
+              || ',aa.watersizeunits '
+              || 'FROM '
+              || 'attains_app.profile_sources aa '
+              || 'WHERE '
+              || '    aa.row_id >  :p01 '
+              || 'AND aa.row_id <= :p02 '
+              || ') a';
+              
+      OPEN curs_ref FOR str_sql USING int_offset,int_limit;
+   
+   END IF;
+ 
+   -----------------------------------------------------------------------------
+   -- Step 60
+   -- Loop through the records
+   -----------------------------------------------------------------------------
+   boo_comma := FALSE;
+   
+   LOOP
+      FETCH curs_ref BULK COLLECT INTO ary_json LIMIT 10000;
+      EXIT WHEN curs_ref%NOTFOUND;
+
+      FOR i IN 1 .. ary_json.COUNT
       LOOP
-         
          IF boo_comma
          THEN
             IF NOT boo_mute
@@ -186,71 +287,18 @@ BEGIN
             boo_comma := TRUE;
             
          END IF;
-         
+
          attains_eq.util.clob2htp(
-             p_input => json_rec.jout
+             p_input => ary_json(i).results
             ,p_mute  => boo_mute
          );
          
       END LOOP;
       
-   ELSE
-      FOR json_rec IN ( 
-         SELECT /*+ INDEX(PROFILE_SOURCES_UX1) NO_PARALLEL(a) */ 
-         JSON_OBJECT(
-             KEY 'objectid'                    VALUE CAST(a.row_id AS INTEGER)
-            ,KEY 'state'                       VALUE a.state
-            ,KEY 'region'                      VALUE a.region
-            ,KEY 'organizationid'              VALUE a.organizationid
-            ,KEY 'organizationname'            VALUE a.organizationname
-            ,KEY 'organizationtype'            VALUE a.organizationtype
-            ,KEY 'reportingcycle'              VALUE a.reportingcycle
-            ,KEY 'assessmentunitid'            VALUE a.assessmentunitid
-            ,KEY 'assessmentunitname'          VALUE a.assessmentunitname
-            ,KEY 'overallstatus'               VALUE a.overallstatus
-            ,KEY 'epaircategory'               VALUE a.epaircategory
-            ,KEY 'stateircategory'             VALUE a.stateircategory
-            ,KEY 'sourcename'                  VALUE a.sourcename
-            ,KEY 'confirmed'                   VALUE a.confirmed
-            ,KEY 'parametergroup'              VALUE a.parametergroup
-            ,KEY 'causename'                   VALUE a.causename
-            ,KEY 'locationdescription'         VALUE a.locationdescription
-            ,KEY 'watertype'                   VALUE a.watertype
-            ,KEY 'watersize'                   VALUE a.watersize
-            ,KEY 'watersizeunits'              VALUE a.watersizeunits
-         ) AS jout
-         FROM
-         attains_app.profile_sources a
-         WHERE
-             a.row_id >  int_offset
-         AND a.row_id <= int_limit
-      )
-      LOOP
-         
-         IF boo_comma
-         THEN
-            IF NOT boo_mute
-            THEN
-               HTP.PRN(',');
-            
-            END IF;
-
-         ELSE
-            boo_comma := TRUE;
-            
-         END IF;
-         
-         attains_eq.util.clob2htp(
-             p_input => json_rec.jout
-            ,p_mute  => boo_mute
-         );
-         
-      END LOOP;
-
-   END IF;
-     
+   END LOOP;
+      
    -----------------------------------------------------------------------------
-   -- Step 60
+   -- Step 70
    -- Close the response
    -----------------------------------------------------------------------------
    IF NOT boo_mute
