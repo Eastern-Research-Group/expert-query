@@ -158,7 +158,7 @@ BEGIN
    -- Step 20
    -- Do the header verification check
    -----------------------------------------------------------------------------
-   IF NOT attains_eq.header_check()
+   IF NOT attains_eq.header_check(api_key)
    THEN
       OWA_UTIL.MIME_HEADER('test/html',FALSE);
       OWA_UTIL.STATUS_LINE(401,'Unauthorized',FALSE);

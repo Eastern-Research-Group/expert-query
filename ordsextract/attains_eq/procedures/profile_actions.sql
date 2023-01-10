@@ -250,8 +250,7 @@ BEGIN
    
    LOOP
       FETCH curs_ref BULK COLLECT INTO ary_json LIMIT 10000;
-      EXIT WHEN curs_ref%NOTFOUND;
-
+      
       FOR i IN 1 .. ary_json.COUNT
       LOOP
          IF boo_comma
@@ -274,7 +273,11 @@ BEGIN
          
       END LOOP;
       
+      EXIT WHEN curs_ref%NOTFOUND;
+      
    END LOOP;
+   
+   CLOSE curs_ref;
       
    -----------------------------------------------------------------------------
    -- Step 70
