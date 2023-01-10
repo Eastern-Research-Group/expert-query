@@ -249,21 +249,21 @@ BEGIN
       IF ary_states IS NOT NULL
       THEN
          str_sql := str_sql        
-                 || 'AND aa.state IN (SELECT column_value FROM TABLE(:p01)) ';
+                 || 'AND aa.state IN (' || util.arystr2in(ary_states) || ') ';
                  
       END IF;
       
       IF ary_orgids IS NOT NULL
       THEN
          str_sql := str_sql        
-                 || 'AND aa.organizationid IN (SELECT column_value FROM TABLE(:p02)) ';
+                 || 'AND aa.organizationid IN (' || util.arystr2in(ary_orgids) || ') ';
                  
       END IF;
 
       IF ary_cycles IS NOT NULL
       THEN
          str_sql := str_sql        
-                 || 'AND aa.reportingcycle IN (SELECT column_value FROM TABLE(:p03)) ';
+                 || 'AND aa.reportingcycle IN (' || util.aryint2str(ary_cycles) || ') ';
                  
       END IF;
               

@@ -177,21 +177,21 @@ BEGIN
       IF ary_states IS NOT NULL
       THEN
          str_sql := str_sql        
-                 || 'AND aa.state IN (SELECT column_value FROM TABLE(:p01)) ';
+                 || 'AND aa.state IN (' || util.arystr2in(ary_states) || ') ';
                  
       END IF;
       
       IF ary_orgids IS NOT NULL
       THEN
          str_sql := str_sql        
-                 || 'AND aa.organizationid IN (SELECT column_value FROM TABLE(:p02)) ';
+                 || 'AND aa.organizationid IN (' || util.arystr2in(ary_orgids) || ') ';
                  
       END IF;
 
       IF ary_cycles IS NOT NULL
       THEN
          str_sql := str_sql        
-                 || 'AND aa.reportingcycle IN (SELECT column_value FROM TABLE(:p03)) ';
+                 || 'AND aa.reportingcycle IN (' || util.aryint2str(ary_cycles) || ') ';
                  
       END IF;
               
@@ -201,24 +201,6 @@ BEGIN
      
       num_curid := DBMS_SQL.OPEN_CURSOR;
       DBMS_SQL.PARSE(num_curid,str_sql,DBMS_SQL.NATIVE);
-      
-      IF ary_states IS NOT NULL
-      THEN
-         DBMS_SQL.BIND_VARIABLE(num_curid,'p01',ary_states);
-      
-      END IF;
-
-      IF ary_orgids IS NOT NULL
-      THEN
-         DBMS_SQL.BIND_VARIABLE(num_curid,'p02',ary_orgids);
-      
-      END IF;
-
-      IF ary_cycles IS NOT NULL
-      THEN
-         DBMS_SQL.BIND_VARIABLE(num_curid,'p03',ary_cycles);
-      
-      END IF;
 
       DBMS_SQL.BIND_VARIABLE(num_curid,'p04',int_offset);
       DBMS_SQL.BIND_VARIABLE(num_curid,'p05',int_limit);
