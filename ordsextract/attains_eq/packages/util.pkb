@@ -89,6 +89,42 @@ AS
    
    -----------------------------------------------------------------------------
    -----------------------------------------------------------------------------
+   FUNCTION arystr2in(
+      pin  IN  attains_eq.string_array
+   ) RETURN VARCHAR2 DETERMINISTIC
+   AS
+     str_out   VARCHAR2(32000 Char);
+     boo_comma BOOLEAN;
+
+   BEGIN
+      IF pin IS NULL
+      THEN
+         RETURN NULL;
+         
+      END IF;
+      
+      boo_comma := FALSE;
+      FOR i IN 1 .. pin.COUNT
+      LOOP
+         IF boo_comma
+         THEN
+            str_out := str_out || ',';
+         
+         ELSE
+            boo_comma := TRUE;
+
+         END IF;
+         
+         str_out := str_out || DBMS_ASSERT.ENQUOTE_LITERAL(pin(i));
+
+      END LOOP;
+      
+      RETURN str_out;
+   
+   END arystr2in;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
    FUNCTION str2aryint(
       pin  IN  VARCHAR2
    ) RETURN attains_eq.integer_array DETERMINISTIC
