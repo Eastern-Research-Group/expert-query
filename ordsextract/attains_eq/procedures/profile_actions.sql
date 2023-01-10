@@ -13,6 +13,7 @@ AS
    ary_states                     attains_eq.string_array;
    ary_orgids                     attains_eq.string_array;
    int_offset                     PLS_INTEGER;
+   int_offsetend                  PLS_INTEGER;
    int_limit                      PLS_INTEGER;
    boo_comma                      BOOLEAN;
    str_slug                       VARCHAR2(4000 Char);
@@ -52,12 +53,13 @@ BEGIN
    IF  int_offset IS NOT NULL
    AND int_limit IS NOT NULL
    THEN
-      int_limit := int_offset + int_limit;
+      int_offsetend := int_offset + int_limit;
       
    ELSE
       IF int_limit IS NULL
       THEN
-         int_limit := 10000;
+         int_limit     := 5000;
+         int_offsetend := 5000;
          
       END IF;
       
@@ -201,7 +203,7 @@ BEGIN
               || 'AND aa.row_id <= :p02 '
               || ') a';
 
-      OPEN curs_ref FOR str_sql USING int_offset,int_limit;
+      OPEN curs_ref FOR str_sql USING int_offset,int_offsetend;
 
    END IF;
    
