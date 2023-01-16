@@ -228,7 +228,7 @@ thread1()
       --config GDAL_NUM_THREADS ${gdal_num_threads}   \
       -f PGDump /vsistdout/                           \
       OCI:${DB_USERNAME}/${DB_PASSWORD}@${oracle_hoststring}:ATTAINS_APP.PROFILE_ASSESSMENT_UNITS \
-      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,assessmentunitid,assessmentunitname,locationdescription,watertype,watersize,watersizeunits,assessmentunitstatus,useclassname,sizesource,sourcescale,locationtypecode,locationtext FROM ATTAINS_APP.PROFILE_ASSESSMENT_UNITS a ${clause}" \
+      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,assessmentunitid,assessmentunitname,locationdescription,watertype,watersize,watersizeunits,assessmentunitstatus,useclassname,sizesource,sourcescale,locationtypecode,locationtext FROM ATTAINS_APP.PROFILE_ASSESSMENT_UNITS a ${clause}" \
       -preserve_fid -lco FID=objectid                 \
       -nln assessment_units                           \
       -lco "GEOMETRY_NAME=shape"                      \
@@ -258,7 +258,7 @@ thread1()
       --config GDAL_NUM_THREADS ${gdal_num_threads}   \
       -f PGDump /vsistdout/                           \
       OCI:${DB_USERNAME}/${DB_PASSWORD}@${oracle_hoststring}:ATTAINS_APP.PROFILE_ASSESSMENT_UNITS_MONITORING_LOCATIONS \
-      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,assessmentunitid,assessmentunitname,locationdescription,watertype,watersize,watersizeunits,monitoringlocationorgid,monitoringlocationid,monitoringlocationdatalink,assessmentunitstatus,useclassname,sizesource,sourcescale FROM ATTAINS_APP.PROFILE_ASSESSMENT_UNITS_MONITORING_LOCATIONS a ${clause}" \
+      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,assessmentunitid,assessmentunitname,locationdescription,watertype,watersize,watersizeunits,monitoringlocationorgid,monitoringlocationid,monitoringlocationdatalink,assessmentunitstatus,useclassname,sizesource,sourcescale FROM ATTAINS_APP.PROFILE_ASSESSMENT_UNITS_MONITORING_LOCATIONS a ${clause}" \
       -preserve_fid -lco FID=objectid                 \
       -nln assessment_units_monitoring_locations      \
       -lco "GEOMETRY_NAME=shape"                      \
