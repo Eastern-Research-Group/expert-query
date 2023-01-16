@@ -476,6 +476,328 @@ AS
       END LOOP;
 
    END clob2htp;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   PROCEDURE all_tables(
+       p_owner                   IN  VARCHAR2
+      ,p_table_name              IN  VARCHAR2
+      ,out_table_found           OUT BOOLEAN
+      ,out_num_rows              OUT INTEGER
+      ,out_last_analyzed         OUT TIMESTAMP
+   )
+   AS
+   BEGIN
+      SELECT
+       a.num_rows
+      ,a.last_analyzed 
+      INTO 
+       out_num_rows
+      ,out_last_analyzed 
+      FROM 
+      all_tables a 
+      WHERE 
+          a.owner      = p_owner 
+      AND a.table_name = p_table_name;
+      
+      out_table_found := TRUE;
+ 
+   EXCEPTION
+      WHEN NO_DATA_FOUND
+      THEN
+         out_table_found := FALSE;
+         RETURN;
+      WHEN OTHERS
+      THEN
+         RETURN;
+
+   END all_tables;
+
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   PROCEDURE all_mviews(
+       p_owner                   IN  VARCHAR2
+      ,p_mview_name              IN  VARCHAR2
+      ,out_mview_found           OUT BOOLEAN
+      ,out_staleness             OUT VARCHAR2
+      ,out_last_refresh_date     OUT TIMESTAMP
+      ,out_last_refresh_end_time OUT TIMESTAMP
+      ,out_last_refresh_type     OUT VARCHAR2
+      ,out_last_refresh_elapsed  OUT INTERVAL DAY TO SECOND
+   )
+   AS
+   BEGIN
+      SELECT
+       a.staleness 
+      ,a.last_refresh_date 
+      ,a.last_refresh_end_time
+      ,a.last_refresh_type
+      INTO 
+       out_staleness
+      ,out_last_refresh_date
+      ,out_last_refresh_end_time
+      ,out_last_refresh_type
+      FROM 
+      all_mviews a 
+      WHERE 
+          a.owner      = p_owner
+      AND a.mview_name = p_mview_name;
+      
+      out_mview_found := TRUE;
+      
+      IF  out_last_refresh_date IS NOT NULL
+      AND out_last_refresh_end_time IS NOT NULL
+      THEN
+         out_last_refresh_elapsed := out_last_refresh_end_time - out_last_refresh_date;
+         
+      END IF;
+
+   EXCEPTION
+      WHEN NO_DATA_FOUND
+      THEN
+         out_mview_found := FALSE;
+         RETURN;
+      
+      WHEN OTHERS
+      THEN
+         RETURN;
+         
+   END all_mviews;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   FUNCTION go_nogo(
+      f                          IN  VARCHAR2 DEFAULT 'JSON'
+   )
+   RETURN CLOB
+   AS
+      str_extract_tag           VARCHAR2(4000 Char);
+      str_start_day             VARCHAR2(4000 Char);
+      str_stop_day              VARCHAr2(4000 Char);
+      boo_valid                 BOOLEAN;         
+      int_num_rows              INTEGER;
+      dat_last_analyzed         DATE;
+      str_staleness             VARCHAR2(4000 Char);
+      dat_last_refresh_date     DATE;
+      dat_last_refresh_end_time DATE;
+      str_last_refresh_type     VARCHAR2(400 Char);
+      inv_last_refresh_elapsed  INTERVAL DAY TO SECOND;
+      inv_largest_refresh       INTERVAL DAY TO SECOND;
+      dat_refresh_start         TIMESTAMP;
+      dat_refresh_stop          TIMESTAMP;
+      boo_table_found           BOOLEAN;
+      boo_mview_found           BOOLEAN;
+      ary_problems              attains_eq.string_array := attains_eq.string_array();
+      int_index                 PLS_INTEGER := 1;
+      str_results               VARCHAR2(4000 Char);
+      
+   BEGIN
+   
+      boo_valid := TRUE;
+   
+      -- Examine each materialized view
+      FOR i IN 1 .. util.ary_profiles.COUNT
+      LOOP
+         all_tables(
+             p_owner                   => 'ATTAINS_APP'
+            ,p_table_name              => util.ary_profiles(i)
+            ,out_table_found           => boo_table_found
+            ,out_num_rows              => int_num_rows
+            ,out_last_analyzed         => dat_last_analyzed
+         );
+         all_mviews(
+             p_owner                   => 'ATTAINS_APP'
+            ,p_mview_name              => util.ary_profiles(i)
+            ,out_mview_found           => boo_mview_found
+            ,out_staleness             => str_staleness
+            ,out_last_refresh_date     => dat_last_refresh_date
+            ,out_last_refresh_end_time => dat_last_refresh_end_time
+            ,out_last_refresh_type     => str_last_refresh_type
+            ,out_last_refresh_elapsed  => inv_last_refresh_elapsed
+         );
+         
+         IF NOT boo_table_found
+         THEN
+            ary_problems.EXTEND();
+            ary_problems(int_index) := util.ary_profiles(i) || ' not found in table metadata.';
+            int_index := int_index + 1;
+            boo_valid := FALSE;
+            
+         ELSE
+            IF NOT boo_mview_found
+            THEN
+               ary_problems.EXTEND();
+               ary_problems(int_index) := util.ary_profiles(i) || ' not found in mview metadata.';
+               int_index := int_index + 1;
+               boo_valid := FALSE;
+               
+            ELSE        
+               IF str_last_refresh_type IS NULL
+               THEN
+                  ary_problems.EXTEND();
+                  ary_problems(int_index) := util.ary_profiles(i) || ' has no refresh status.';
+                  int_index := int_index + 1;
+                  boo_valid := FALSE;
+                  
+               ELSIF str_last_refresh_type != 'COMPLETE'
+               THEN
+                  ary_problems.EXTEND();
+                  ary_problems(int_index) := util.ary_profiles(i) || ' is marked ' || str_last_refresh_type || '.';
+                  int_index := int_index + 1;
+                  boo_valid := FALSE;
+                  
+               END IF;
+               
+            END IF;
+            
+         END IF;
+         
+         IF dat_last_refresh_date IS NOT NULL
+         THEN
+            IF dat_refresh_start IS NULL
+            THEN
+               dat_refresh_start := dat_last_refresh_date;
+               
+            ELSE
+               IF dat_last_refresh_date < dat_refresh_start
+               THEN
+                  dat_refresh_start := dat_last_refresh_date;
+                  
+               END IF;
+            
+            END IF;
+         
+         END IF;
+         
+         IF dat_last_refresh_end_time IS NOT NULL
+         THEN
+            IF dat_refresh_stop IS NULL
+            THEN
+               dat_refresh_stop := dat_last_refresh_end_time;
+               
+            ELSE
+               IF dat_last_refresh_end_time > dat_refresh_stop
+               THEN
+                  dat_refresh_stop := dat_last_refresh_end_time;
+                  
+               END IF;
+            
+            END IF;
+         
+         END IF;
+         
+         IF inv_last_refresh_elapsed IS NOT NULL
+         THEN
+            IF inv_largest_refresh IS NULL
+            THEN
+               inv_largest_refresh := inv_last_refresh_elapsed;
+               
+            ELSE
+               IF inv_last_refresh_elapsed > inv_largest_refresh
+               THEN
+                  inv_largest_refresh := inv_last_refresh_elapsed;
+                  
+               END IF;
+            
+            END IF;
+         
+         END IF;
+      
+      END LOOP;
+      
+      IF dat_refresh_stop - dat_refresh_start > INTERVAL '24' HOUR
+      THEN
+         ary_problems.EXTEND();
+         ary_problems(int_index) := 'refresh spans larger than 24 hours.';
+         int_index := int_index + 1;
+         boo_valid := FALSE;
+                  
+      END IF;
+      
+      IF boo_valid
+      THEN
+         str_start_day := TO_CHAR(dat_refresh_start,'DD');
+         str_stop_day  := TO_CHAR(dat_refresh_stop, 'DD');
+         
+         str_extract_tag := str_start_day || '/' || str_stop_day;
+      
+      END IF;
+      
+      IF f = 'VALS'
+      THEN
+         str_results := '';
+         
+         IF boo_valid
+         THEN
+            str_results := str_results || 'go';
+            
+         ELSE
+            str_results := str_results || 'nogo';
+         
+         END IF;
+         
+         IF str_extract_tag IS NOT NULL
+         THEN
+            str_results := str_results || ' ' || str_extract_tag;
+            
+         END IF;
+          
+      ELSE
+         str_results := '{"ready":';
+         
+         IF boo_valid
+         THEN
+            str_results := str_results || '"go"';
+            
+         ELSE
+            str_results := str_results || '"nogo"';
+         
+         END IF;
+         
+         str_results := str_results || ',"tag":';
+         
+         IF str_extract_tag IS NOT NULL
+         THEN
+            str_results := str_results || '"' || str_extract_tag || '"';
+            
+         ELSE
+            str_results := str_results || 'null';
+         
+         END IF;
+         
+         str_results := str_results || ',"problems":';
+         
+         IF ary_problems IS NULL
+         OR ary_problems.COUNT = 0
+         THEN
+            str_results := str_results || '[]';
+            
+         ELSE
+            str_results := str_results || '[';
+            
+            FOR i IN 1 .. ary_problems.COUNT
+            LOOP
+               str_results := str_results || '"' || ary_problems(i) || '"';
+               
+               IF i < ary_problems.COUNT
+               THEN
+                  str_results := str_results || ',';
+               
+               END IF;
+         
+            END LOOP;
+            
+            str_results := str_results || ']';
+            
+         END IF;
+         
+         str_results := str_results || '}';
+         
+      END IF;
+      
+      RETURN str_results;
+   
+   END go_nogo;
 
 END util;
 /
