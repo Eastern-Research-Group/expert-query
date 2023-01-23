@@ -591,6 +591,15 @@ AS
       int_index                 PLS_INTEGER := 1;
       str_results               VARCHAR2(4000 Char);
       
+      FUNCTION get_hours(
+         p_in   IN  INTERVAL DAY TO SECOND
+      ) RETURN INTEGER
+      AS
+      BEGIN
+         RETURN EXTRACT(DAY FROM (p_in)) * 12 + EXTRACT(HOUR FROM (p_in));
+
+      END get_hours;
+      
    BEGIN
    
       boo_valid := TRUE;
@@ -705,10 +714,10 @@ AS
       
       END LOOP;
       
-      IF dat_refresh_stop - dat_refresh_start > INTERVAL '24' HOUR
+      IF dat_refresh_stop - dat_refresh_start > gonogo_hour_interval
       THEN
          ary_problems.EXTEND();
-         ary_problems(int_index) := 'refresh spans larger than 24 hours.';
+         ary_problems(int_index) := 'refresh spans larger than ' || TO_CHAR(get_hours(gonogo_hour_interval)) || ' hours.';
          int_index := int_index + 1;
          boo_valid := FALSE;
                   
