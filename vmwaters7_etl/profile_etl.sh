@@ -161,7 +161,7 @@ putlog
 ogrinfo \
    OCI:${DB_USERNAME}/${DB_PASSWORD}@${oracle_hoststring}:ATTAINS_APP.PROFILE_TMDL \
    -q -nomd -nocount -noextent                                                     \
-   -sql "SELECT TO_CHAR(rad_nhd.util.go_nogo('JSON')) AS ready FROM dual" |        \
+   -sql "SELECT TO_CHAR(attains_eq.util.go_nogo('JSON')) AS ready FROM dual" |        \
 awk '/^  READY \(String\) \= /{$1=$2=$3="";gsub(/^[ ]+/,"",$0);print $0}' > ${readyfile}
 putready
 
