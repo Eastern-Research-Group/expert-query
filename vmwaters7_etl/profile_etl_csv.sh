@@ -217,7 +217,7 @@ thread1()
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating actions zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/actions.csv
    mkfifo ${staging_dir}/actions.csv
-   gzip -q -c ${staging_dir}/actions_${ts}.csv.gz > ${staging_dir}/actions.csv & \
+   gzip -q -d -c ${staging_dir}/actions_${ts}.csv.gz > ${staging_dir}/actions.csv & \
       zip -q -j --fifo ${staging_dir}/actions_${ts}.csv.zip ${staging_dir}/actions.csv
    rm -Rf ${staging_dir}/actions.csv
       
@@ -258,7 +258,7 @@ thread1()
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating assessment_units zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/assessment_units.csv
    mkfifo ${staging_dir}/assessment_units.csv
-   gzip -q -c ${staging_dir}/assessment_units_${ts}.csv.gz > ${staging_dir}/assessment_units.csv & \
+   gzip -q -d -c ${staging_dir}/assessment_units_${ts}.csv.gz > ${staging_dir}/assessment_units.csv & \
       zip -q -j --fifo ${staging_dir}/assessment_units_${ts}.csv.zip ${staging_dir}/assessment_units.csv
    rm -Rf ${staging_dir}/assessment_units.csv
    
@@ -299,7 +299,7 @@ thread1()
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating assessment_units_monitoring_locations zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/assessment_units_monitoring_locations.csv
    mkfifo ${staging_dir}/assessment_units_monitoring_locations.csv
-   gzip -q -c ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.gz > ${staging_dir}/assessment_units_monitoring_locations.csv & \
+   gzip -q -d -c ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.gz > ${staging_dir}/assessment_units_monitoring_locations.csv & \
       zip -q -j --fifo ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.zip ${staging_dir}/assessment_units_monitoring_locations.csv
    rm -Rf ${staging_dir}/assessment_units_monitoring_locations.csv
    
@@ -340,7 +340,7 @@ thread1()
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating sources zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/sources.csv
    mkfifo ${staging_dir}/sources.csv
-   gzip -q -c ${staging_dir}/sources_${ts}.csv.gz > ${staging_dir}/sources.csv & \
+   gzip -q -d -c ${staging_dir}/sources_${ts}.csv.gz > ${staging_dir}/sources.csv & \
       zip -q -j --fifo ${staging_dir}/sources_${ts}.csv.zip ${staging_dir}/sources.csv
    rm -Rf ${staging_dir}/sources.csv
    
@@ -381,7 +381,7 @@ thread1()
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating tmdl zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/tmdl.csv
    mkfifo ${staging_dir}/tmdl.csv
-   gzip -q -c ${staging_dir}/tmdl_${ts}.csv.gz > ${staging_dir}/tmdl.csv & \
+   gzip -q -d -c ${staging_dir}/tmdl_${ts}.csv.gz > ${staging_dir}/tmdl.csv & \
       zip -q -j --fifo ${staging_dir}/tmdl_${ts}.csv.zip ${staging_dir}/tmdl.csv
    rm -Rf ${staging_dir}/tmdl.csv
    
@@ -428,7 +428,7 @@ thread2()
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating assessments zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/assessments.csv
    mkfifo ${staging_dir}/assessments.csv
-   gzip -q -c ${staging_dir}/assessments_${ts}.csv.gz > ${staging_dir}/assessments.csv & \
+   gzip -q -d -c ${staging_dir}/assessments_${ts}.csv.gz > ${staging_dir}/assessments.csv & \
       zip -q -j --fifo ${staging_dir}/assessments_${ts}.csv.zip ${staging_dir}/assessments.csv
    rm -Rf ${staging_dir}/assessments.csv
    
@@ -475,7 +475,7 @@ thread3()
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating catchment_correspondence zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/catchment_correspondence.csv
    mkfifo ${staging_dir}/catchment_correspondence.csv
-   gzip -q -c ${staging_dir}/catchment_correspondence_${ts}.csv.gz > ${staging_dir}/catchment_correspondence.csv & \
+   gzip -q -d -c ${staging_dir}/catchment_correspondence_${ts}.csv.gz > ${staging_dir}/catchment_correspondence.csv & \
       zip -q -j --fifo ${staging_dir}/catchment_correspondence_${ts}.csv.zip ${staging_dir}/catchment_correspondence.csv
    rm -Rf ${staging_dir}/catchment_correspondence.csv
    
