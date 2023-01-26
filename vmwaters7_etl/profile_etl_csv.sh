@@ -516,5 +516,5 @@ echo "}"                          >> ${latestfile}
 putlatest
 
 ###############################################################################
-echo `date +"%Y-%m-%d %H:%M:%S"`": All ETL tasks completed successfuly." >> ${logfile} 
+echo `date +"%Y-%m-%d %H:%M:%S"`": All ETL tasks completed successfully." >> ${logfile} 
 putlog
