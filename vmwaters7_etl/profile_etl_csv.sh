@@ -186,6 +186,12 @@ fi
    
 ###############################################################################
 # Begin the extract in three threads
+# note the usage of -fz with the fifo input to zip makes no sense but is necessary
+# to work on RedHat.  When no flag is given the --fifo input seems forced into
+# 32 bit mode which bombs when the archive tops 2GB.  However when -fz is expressly
+# provided this seems to trigger some internal logic that forces over to 64 bit processing.
+#
+# A clause may be provided for testing a limited set of data to validate the workflow
 #clause="WHERE rownum <= 100"
 clause=""
 
@@ -218,7 +224,7 @@ thread1()
    rm -Rf ${staging_dir}/actions.csv
    mkfifo ${staging_dir}/actions.csv
    gzip -q -d -c ${staging_dir}/actions_${ts}.csv.gz > ${staging_dir}/actions.csv & \
-      zip -q -j --fifo ${staging_dir}/actions_${ts}.csv.zip ${staging_dir}/actions.csv
+      zip -q -j -fz --fifo ${staging_dir}/actions_${ts}.csv.zip ${staging_dir}/actions.csv
    rm -Rf ${staging_dir}/actions.csv
       
    echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading actions zip to S3." >> ${logfile}
@@ -259,7 +265,7 @@ thread1()
    rm -Rf ${staging_dir}/assessment_units.csv
    mkfifo ${staging_dir}/assessment_units.csv
    gzip -q -d -c ${staging_dir}/assessment_units_${ts}.csv.gz > ${staging_dir}/assessment_units.csv & \
-      zip -q -j --fifo ${staging_dir}/assessment_units_${ts}.csv.zip ${staging_dir}/assessment_units.csv
+      zip -q -j -fz --fifo ${staging_dir}/assessment_units_${ts}.csv.zip ${staging_dir}/assessment_units.csv
    rm -Rf ${staging_dir}/assessment_units.csv
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessment_units zip to S3." >> ${logfile}
@@ -300,7 +306,7 @@ thread1()
    rm -Rf ${staging_dir}/assessment_units_monitoring_locations.csv
    mkfifo ${staging_dir}/assessment_units_monitoring_locations.csv
    gzip -q -d -c ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.gz > ${staging_dir}/assessment_units_monitoring_locations.csv & \
-      zip -q -j --fifo ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.zip ${staging_dir}/assessment_units_monitoring_locations.csv
+      zip -q -j -fz --fifo ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.zip ${staging_dir}/assessment_units_monitoring_locations.csv
    rm -Rf ${staging_dir}/assessment_units_monitoring_locations.csv
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessment_units_monitoring_locations zip to S3." >> ${logfile}
@@ -341,7 +347,7 @@ thread1()
    rm -Rf ${staging_dir}/sources.csv
    mkfifo ${staging_dir}/sources.csv
    gzip -q -d -c ${staging_dir}/sources_${ts}.csv.gz > ${staging_dir}/sources.csv & \
-      zip -q -j --fifo ${staging_dir}/sources_${ts}.csv.zip ${staging_dir}/sources.csv
+      zip -q -j -fz --fifo ${staging_dir}/sources_${ts}.csv.zip ${staging_dir}/sources.csv
    rm -Rf ${staging_dir}/sources.csv
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading sources zip to S3." >> ${logfile}
@@ -382,7 +388,7 @@ thread1()
    rm -Rf ${staging_dir}/tmdl.csv
    mkfifo ${staging_dir}/tmdl.csv
    gzip -q -d -c ${staging_dir}/tmdl_${ts}.csv.gz > ${staging_dir}/tmdl.csv & \
-      zip -q -j --fifo ${staging_dir}/tmdl_${ts}.csv.zip ${staging_dir}/tmdl.csv
+      zip -q -j -fz --fifo ${staging_dir}/tmdl_${ts}.csv.zip ${staging_dir}/tmdl.csv
    rm -Rf ${staging_dir}/tmdl.csv
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading tmdl zip to S3." >> ${logfile}
@@ -429,7 +435,7 @@ thread2()
    rm -Rf ${staging_dir}/assessments.csv
    mkfifo ${staging_dir}/assessments.csv
    gzip -q -d -c ${staging_dir}/assessments_${ts}.csv.gz > ${staging_dir}/assessments.csv & \
-      zip -q -j --fifo ${staging_dir}/assessments_${ts}.csv.zip ${staging_dir}/assessments.csv
+      zip -q -j -fz --fifo ${staging_dir}/assessments_${ts}.csv.zip ${staging_dir}/assessments.csv
    rm -Rf ${staging_dir}/assessments.csv
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessments zip to S3." >> ${logfile}
@@ -476,7 +482,7 @@ thread3()
    rm -Rf ${staging_dir}/catchment_correspondence.csv
    mkfifo ${staging_dir}/catchment_correspondence.csv
    gzip -q -d -c ${staging_dir}/catchment_correspondence_${ts}.csv.gz > ${staging_dir}/catchment_correspondence.csv & \
-      zip -q -j --fifo ${staging_dir}/catchment_correspondence_${ts}.csv.zip ${staging_dir}/catchment_correspondence.csv
+      zip -q -j -fz --fifo ${staging_dir}/catchment_correspondence_${ts}.csv.zip ${staging_dir}/catchment_correspondence.csv
    rm -Rf ${staging_dir}/catchment_correspondence.csv
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading catchment_correspondence zip to S3." >> ${logfile}
