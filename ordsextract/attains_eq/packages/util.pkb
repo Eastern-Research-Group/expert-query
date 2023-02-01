@@ -596,7 +596,7 @@ AS
       ) RETURN INTEGER
       AS
       BEGIN
-         RETURN EXTRACT(DAY FROM (p_in)) * 12 + EXTRACT(HOUR FROM (p_in));
+         RETURN EXTRACT(DAY FROM (p_in)) * 24 + EXTRACT(HOUR FROM (p_in));
 
       END get_hours;
       
