@@ -12,7 +12,6 @@ AS
    boo_mute                       BOOLEAN := FALSE;
    ary_states                     attains_eq.string_array;
    ary_orgids                     attains_eq.string_array;
-   ary_cycles                     attains_eq.integer_array;
    int_offset                     PLS_INTEGER;
    int_offsetend                  PLS_INTEGER;
    int_limit                      PLS_INTEGER;
@@ -45,12 +44,6 @@ BEGIN
    IF p_organizationid IS NOT NULL
    THEN
       ary_orgids := util.str2arystr(p_organizationid);
-      
-   END IF;
-   
-   IF p_reportingcycle IS NOT NULL
-   THEN
-      ary_cycles := util.str2aryint(p_reportingcycle);
       
    END IF;
    
@@ -130,7 +123,6 @@ BEGIN
            || '   ,KEY ''organizationid''              VALUE a.organizationid '
            || '   ,KEY ''organizationname''            VALUE a.organizationname '
            || '   ,KEY ''organizationtype''            VALUE a.organizationtype '
-           || '   ,KEY ''reportingcycle''              VALUE a.reportingcycle '
            || '   ,KEY ''assessmentunitid''            VALUE a.assessmentunitid '
            || '   ,KEY ''assessmentunitname''          VALUE a.assessmentunitname '
            || '   ,KEY ''actionid''                    VALUE a.actionid '
@@ -165,7 +157,6 @@ BEGIN
            || '   ,aa.organizationid '
            || '   ,aa.organizationname '
            || '   ,aa.organizationtype '
-           || '   ,aa.reportingcycle '
            || '   ,aa.assessmentunitid '
            || '   ,aa.assessmentunitname '
            || '   ,aa.actionid '
@@ -197,7 +188,6 @@ BEGIN
            
    IF ary_states IS NOT NULL
    OR ary_orgids IS NOT NULL
-   OR ary_cycles IS NOT NULL
    THEN
       str_sql := str_sql
               || '    1 = 1 ';
@@ -213,13 +203,6 @@ BEGIN
       THEN
          str_sql := str_sql        
                  || 'AND aa.organizationid IN (' || util.arystr2in(ary_orgids) || ') ';
-                 
-      END IF;
-
-      IF ary_cycles IS NOT NULL
-      THEN
-         str_sql := str_sql        
-                 || 'AND aa.reportingcycle IN (' || util.aryint2str(ary_cycles) || ') ';
                  
       END IF;
               
@@ -309,16 +292,6 @@ BEGIN
          
       END IF;
       HTP.PRN(',"organizationid":' || str_slug);
-      
-      IF ary_cycles IS NULL
-      THEN
-         str_slug := 'null';
-         
-      ELSE
-         str_slug := '"' || util.aryint2str(ary_cycles) || '"';
-         
-      END IF;
-      HTP.PRN(',"reportingcycle":' || str_slug);
       
       IF int_offset IS NULL
       THEN

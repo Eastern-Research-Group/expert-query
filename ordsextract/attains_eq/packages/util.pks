@@ -12,7 +12,7 @@ AS
       ,'PROFILE_TMDL'
    );
 
-   gonogo_hour_interval INTERVAL DAY TO SECOND := INTERVAL '48' HOUR;
+   gonogo_hour_interval INTERVAL DAY TO SECOND := INTERVAL '24' HOUR;
 
    -----------------------------------------------------------------------------
    -----------------------------------------------------------------------------
