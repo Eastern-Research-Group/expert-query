@@ -3,12 +3,13 @@
 ###############################################################################
 # Configuration
 
-# Staging directory needs at least 6GB to process current profile ETL
+# Staging directory
 staging_dir=/data/waterspb/loading_dock
 # Number of threads used by GDAL processes
 gdal_num_threads=1
 # Target S3 bucket details
-bucket_name=cg-4b438f23-e2c7-4711-bde2-8e165bb93e01
+bucket_name=cg-938cb302-af9e-4f3d-b469-7c71e9cd5eeb
+bucket_dir=/national-downloads
 aws_region=us-gov-west-1
 aws_s3_endpoint=s3-fips.us-gov-west-1.amazonaws.com
 # Chunk size to use when uploading to S3
@@ -71,7 +72,7 @@ fi
 while read -r LINE; do
    if [[ $LINE == *'='* ]] && [[ $LINE != '#'* ]]; then
       ENV_VAR="$(echo $LINE | envsubst)"
-      eval "declare $ENV_VAR"
+      eval "export $ENV_VAR"
    fi
 done < ${secrets_location}
 
@@ -98,7 +99,7 @@ putlog()
       --host=${aws_s3_endpoint}                       \
       --host-bucket=${bucket_name}.${aws_s3_endpoint} \
       put ${logfile}                                  \
-      s3://${bucket_name}/${ts}/logfile.txt
+      s3://${bucket_name}${bucket_dir}/${ts}/logfile.txt
 }
 
 putstatus()
@@ -108,7 +109,7 @@ putstatus()
       --host=${aws_s3_endpoint}                       \
       --host-bucket=${bucket_name}.${aws_s3_endpoint} \
       put ${statusfile}                               \
-      s3://${bucket_name}/${ts}/status.json
+      s3://${bucket_name}${bucket_dir}/${ts}/status.json
 }
 
 putready()
@@ -118,7 +119,7 @@ putready()
       --host=${aws_s3_endpoint}                       \
       --host-bucket=${bucket_name}.${aws_s3_endpoint} \
       put ${readyfile}                               \
-      s3://${bucket_name}/${ts}/ready.json
+      s3://${bucket_name}${bucket_dir}/${ts}/ready.json
 }
 
 putlatest()
@@ -128,7 +129,7 @@ putlatest()
       --host=${aws_s3_endpoint}                       \
       --host-bucket=${bucket_name}.${aws_s3_endpoint} \
       put ${latestfile}                               \
-      s3://${bucket_name}/latest.json
+      s3://${bucket_name}${bucket_dir}/latest.json
 }
 
 echo `date +"%Y-%m-%d %H:%M:%S"`": Starting ATTAINS profile ETL for ${ts}" >> ${logfile}
@@ -140,7 +141,7 @@ python ${s3cmd_location} --quiet                   \
    --region=${aws_region}                          \
    --host=${aws_s3_endpoint}                       \
    --host-bucket=${bucket_name}.${aws_s3_endpoint} \
-   get s3://${bucket_name}/latest.json ${latestfile} 2> /dev/null
+   get s3://${bucket_name}${bucket_dir}/latest.json ${latestfile} 2> /dev/null
 
 if [[ $? -eq 0 ]]
 then
@@ -183,7 +184,7 @@ then
    putlog
    exit 0
 fi
-   
+
 ###############################################################################
 # Begin the extract in three threads
 # note the usage of -fz with the fifo input to zip makes no sense but is necessary
@@ -218,7 +219,7 @@ thread1()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/actions_${ts}.csv.gz                 \
-      s3://${bucket_name}/${ts}/actions.csv.gz
+      s3://${bucket_name}${bucket_dir}/${ts}/actions.csv.gz
       
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating actions zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/actions.csv
@@ -234,7 +235,7 @@ thread1()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/actions_${ts}.csv.zip                \
-      s3://${bucket_name}/${ts}/actions.csv.zip
+      s3://${bucket_name}${bucket_dir}/${ts}/actions.csv.zip
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of actions complete." >> ${logfile}   
    
@@ -244,7 +245,7 @@ thread1()
       --config GDAL_NUM_THREADS ${gdal_num_threads}           \
       -f CSV /vsistdout/                                      \
       OCI:${DB_USERNAME}/${DB_PASSWORD}@${oracle_hoststring}:ATTAINS_APP.PROFILE_ASSESSMENT_UNITS \
-      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,assessmentunitid,assessmentunitname,locationdescription,watertype,watersize,watersizeunits,assessmentunitstatus,useclassname,sizesource,sourcescale,locationtypecode,locationtext FROM ATTAINS_APP.PROFILE_ASSESSMENT_UNITS a ${clause}" \
+      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,cycleid,assessmentunitid,assessmentunitname,locationdescription,watertype,watersize,watersizeunits,assessmentunitstatus,useclassname,sizesource,sourcescale,locationtypecode,locationtext FROM ATTAINS_APP.PROFILE_ASSESSMENT_UNITS a ${clause}" \
       -preserve_fid -lco LINEFORMAT=LF                        \
       -lco STRING_QUOTING=IF_NEEDED                         | \
    gzip -q > ${staging_dir}/assessment_units_${ts}.csv.gz
@@ -259,7 +260,7 @@ thread1()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/assessment_units_${ts}.csv.gz        \
-      s3://${bucket_name}/${ts}/assessment_units.csv.gz
+      s3://${bucket_name}${bucket_dir}/${ts}/assessment_units.csv.gz
       
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating assessment_units zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/assessment_units.csv
@@ -275,7 +276,7 @@ thread1()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/assessment_units_${ts}.csv.zip       \
-      s3://${bucket_name}/${ts}/assessment_units.csv.zip
+      s3://${bucket_name}${bucket_dir}/${ts}/assessment_units.csv.zip
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of assessment_units complete." >> ${logfile} 
    
@@ -285,7 +286,7 @@ thread1()
       --config GDAL_NUM_THREADS ${gdal_num_threads}           \
       -f CSV /vsistdout/                                      \
       OCI:${DB_USERNAME}/${DB_PASSWORD}@${oracle_hoststring}:ATTAINS_APP.PROFILE_ASSESSMENT_UNITS_MONITORING_LOCATIONS \
-      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,assessmentunitid,assessmentunitname,locationdescription,watertype,watersize,watersizeunits,monitoringlocationorgid,monitoringlocationid,monitoringlocationdatalink,assessmentunitstatus,useclassname,sizesource,sourcescale FROM ATTAINS_APP.PROFILE_ASSESSMENT_UNITS_MONITORING_LOCATIONS a ${clause}" \
+      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,cycleid,assessmentunitid,assessmentunitname,locationdescription,watertype,watersize,watersizeunits,monitoringlocationorgid,monitoringlocationid,monitoringlocationdatalink,assessmentunitstatus,useclassname,sizesource,sourcescale FROM ATTAINS_APP.PROFILE_ASSESSMENT_UNITS_MONITORING_LOCATIONS a ${clause}" \
       -preserve_fid -lco LINEFORMAT=LF                        \
       -lco STRING_QUOTING=IF_NEEDED                         | \
    gzip -q > ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.gz
@@ -300,7 +301,7 @@ thread1()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.gz \
-      s3://${bucket_name}/${ts}/assessment_units_monitoring_locations.csv.gz
+      s3://${bucket_name}${bucket_dir}/${ts}/assessment_units_monitoring_locations.csv.gz
       
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating assessment_units_monitoring_locations zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/assessment_units_monitoring_locations.csv
@@ -316,7 +317,7 @@ thread1()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.zip \
-      s3://${bucket_name}/${ts}/assessment_units_monitoring_locations.csv.zip
+      s3://${bucket_name}${bucket_dir}/${ts}/assessment_units_monitoring_locations.csv.zip
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of assessment_units_monitoring_locations complete." >> ${logfile} 
    
@@ -326,7 +327,7 @@ thread1()
       --config GDAL_NUM_THREADS ${gdal_num_threads}           \
       -f CSV /vsistdout/                                      \
       OCI:${DB_USERNAME}/${DB_PASSWORD}@${oracle_hoststring}:ATTAINS_APP.PROFILE_SOURCES \
-      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,assessmentunitid,assessmentunitname,overallstatus,epaircategory,stateircategory,sourcename,confirmed,parametergroup,causename,locationdescription,watertype,watersize,watersizeunits FROM ATTAINS_APP.PROFILE_SOURCES a ${clause}" \
+      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,cycleid,assessmentunitid,assessmentunitname,overallstatus,epaircategory,stateircategory,sourcename,confirmed,parametergroup,causename,locationdescription,watertype,watersize,watersizeunits FROM ATTAINS_APP.PROFILE_SOURCES a ${clause}" \
       -preserve_fid -lco LINEFORMAT=LF                        \
       -lco STRING_QUOTING=IF_NEEDED                         | \
    gzip -q > ${staging_dir}/sources_${ts}.csv.gz
@@ -341,7 +342,7 @@ thread1()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/sources_${ts}.csv.gz                 \
-      s3://${bucket_name}/${ts}/sources.csv.gz
+      s3://${bucket_name}${bucket_dir}/${ts}/sources.csv.gz
       
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating sources zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/sources.csv
@@ -357,7 +358,7 @@ thread1()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/sources_${ts}.csv.zip                \
-      s3://${bucket_name}/${ts}/sources.csv.zip
+      s3://${bucket_name}${bucket_dir}/${ts}/sources.csv.zip
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of sources complete." >> ${logfile} 
    
@@ -367,7 +368,7 @@ thread1()
       --config GDAL_NUM_THREADS ${gdal_num_threads}           \
       -f CSV /vsistdout/                                      \
       OCI:${DB_USERNAME}/${DB_PASSWORD}@${oracle_hoststring}:ATTAINS_APP.PROFILE_TMDL \
-      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,assessmentunitid,assessmentunitname,actionid,actionname,completiondate,tmdldate,fiscalyearestablished,pollutant,sourcetype,addressedparameter,locationdescription,watertype,watersize,watersizeunits,actionagency,loadallocation,loadallocationunits,explicitmarginofsafety,implicitmarginofsafety,tmdlendpoint,npdesidentifier,otheridentifier,wasteloadallocation,inindiancountry,includeinmeasure FROM ATTAINS_APP.PROFILE_TMDL a ${clause}" \
+      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,assessmentunitid,assessmentunitname,actionid,actionname,completiondate,tmdldate,fiscalyearestablished,pollutant,sourcetype,addressedparameter,locationdescription,watertype,watersize,watersizeunits,actionagency,loadallocation,loadallocationunits,explicitmarginofsafety,implicitmarginofsafety,tmdlendpoint,npdesidentifier,otheridentifier,wasteloadallocation,inindiancountry,includeinmeasure FROM ATTAINS_APP.PROFILE_TMDL a ${clause}" \
       -preserve_fid -lco LINEFORMAT=LF                        \
       -lco STRING_QUOTING=IF_NEEDED                         | \
    gzip -q > ${staging_dir}/tmdl_${ts}.csv.gz
@@ -382,7 +383,7 @@ thread1()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/tmdl_${ts}.csv.gz                    \
-      s3://${bucket_name}/${ts}/tmdl.csv.gz
+      s3://${bucket_name}${bucket_dir}/${ts}/tmdl.csv.gz
       
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating tmdl zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/tmdl.csv
@@ -398,7 +399,7 @@ thread1()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/tmdl_${ts}.csv.zip                   \
-      s3://${bucket_name}/${ts}/tmdl.csv.zip
+      s3://${bucket_name}${bucket_dir}/${ts}/tmdl.csv.zip
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of tmdl complete." >> ${logfile}
    
@@ -414,7 +415,7 @@ thread2()
       --config GDAL_NUM_THREADS ${gdal_num_threads}           \
       -f CSV /vsistdout/                                      \
       OCI:${DB_USERNAME}/${DB_PASSWORD}@${oracle_hoststring}:ATTAINS_APP.PROFILE_ASSESSMENTS \
-      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,assessmentunitid,assessmentunitname,cyclelastassessed,overallstatus,epaircategory,stateircategory,parametergroup,parametername,parameterstatus,usegroup,usename,useircategory,usestateircategory,usesupport,parameterattainment,parameterircategory,parameterstateircategory,cyclefirstlisted,associatedactionid,associatedactionname,associatedactiontype,locationdescription,watertype,watersize,watersizeunits,sizesource,sourcescale,assessmentunitstatus,useclassname,assessmentdate,assessmentbasis,monitoringstartdate,monitoringenddate,assessmentmethods,assessmenttypes,delisted,delistedreason,seasonstartdate,seasonenddate,pollutantindicator,cyclescheduledfortmdl,cycleexpectedtoattain,cwa303dpriorityranking,vision303dpriority,alternatelistingidentifier,consentdecreecycle,associatedactionstatus,associatedactionagency FROM ATTAINS_APP.PROFILE_ASSESSMENTS a ${clause}" \
+      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,cycleid,assessmentunitid,assessmentunitname,cyclelastassessed,overallstatus,epaircategory,stateircategory,parametergroup,parametername,parameterstatus,usegroup,usename,useircategory,usestateircategory,usesupport,parameterattainment,parameterircategory,parameterstateircategory,cyclefirstlisted,associatedactionid,associatedactionname,associatedactiontype,locationdescription,watertype,watersize,watersizeunits,sizesource,sourcescale,assessmentunitstatus,useclassname,assessmentdate,assessmentbasis,monitoringstartdate,monitoringenddate,assessmentmethods,assessmenttypes,delisted,delistedreason,seasonstartdate,seasonenddate,pollutantindicator,cyclescheduledfortmdl,cycleexpectedtoattain,cwa303dpriorityranking,vision303dpriority,alternatelistingidentifier,consentdecreecycle,associatedactionstatus,associatedactionagency FROM ATTAINS_APP.PROFILE_ASSESSMENTS a ${clause}" \
       -preserve_fid -lco LINEFORMAT=LF                        \
       -lco STRING_QUOTING=IF_NEEDED                         | \
    gzip -q > ${staging_dir}/assessments_${ts}.csv.gz
@@ -429,7 +430,7 @@ thread2()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/assessments_${ts}.csv.gz             \
-      s3://${bucket_name}/${ts}/assessments.csv.gz
+      s3://${bucket_name}${bucket_dir}/${ts}/assessments.csv.gz
       
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating assessments zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/assessments.csv
@@ -445,7 +446,7 @@ thread2()
       --host=${aws_s3_endpoint}                               \
       --host-bucket=${bucket_name}.${aws_s3_endpoint}         \
       put ${staging_dir}/assessments_${ts}.csv.zip            \
-      s3://${bucket_name}/${ts}/assessments.csv.zip
+      s3://${bucket_name}${bucket_dir}/${ts}/assessments.csv.zip
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of assessments complete." >> ${logfile}
    
@@ -461,7 +462,7 @@ thread3()
       --config GDAL_NUM_THREADS ${gdal_num_threads}           \
       -f CSV /vsistdout/                                      \
       OCI:${DB_USERNAME}/${DB_PASSWORD}@${oracle_hoststring}:ATTAINS_APP.PROFILE_CATCHMENT_CORRESPONDENCE \
-      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,assessmentunitid,assessmentunitname,catchmentnhdplusid FROM ATTAINS_APP.PROFILE_CATCHMENT_CORRESPONDENCE a ${clause}" \
+      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,state,region,organizationid,organizationname,organizationtype,reportingcycle,cycleid,assessmentunitid,assessmentunitname,catchmentnhdplusid FROM ATTAINS_APP.PROFILE_CATCHMENT_CORRESPONDENCE a ${clause}" \
       -preserve_fid -lco LINEFORMAT=LF                        \
       -lco STRING_QUOTING=IF_NEEDED                         | \
    gzip -q > ${staging_dir}/catchment_correspondence_${ts}.csv.gz
@@ -476,7 +477,7 @@ thread3()
       --host=${aws_s3_endpoint}                       \
       --host-bucket=${bucket_name}.${aws_s3_endpoint} \
       put ${staging_dir}/catchment_correspondence_${ts}.csv.gz \
-      s3://${bucket_name}/${ts}/catchment_correspondence.csv.gz
+      s3://${bucket_name}${bucket_dir}/${ts}/catchment_correspondence.csv.gz
       
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating catchment_correspondence zipfile." >> ${logfile}
    rm -Rf ${staging_dir}/catchment_correspondence.csv
@@ -492,7 +493,7 @@ thread3()
       --host=${aws_s3_endpoint}                       \
       --host-bucket=${bucket_name}.${aws_s3_endpoint} \
       put ${staging_dir}/catchment_correspondence_${ts}.csv.zip \
-      s3://${bucket_name}/${ts}/catchment_correspondence.csv.zip
+      s3://${bucket_name}${bucket_dir}/${ts}/catchment_correspondence.csv.zip
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of catchment_correspondence complete." >> ${logfile}
    
