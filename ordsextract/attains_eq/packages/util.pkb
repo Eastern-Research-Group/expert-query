@@ -479,6 +479,42 @@ AS
    
    -----------------------------------------------------------------------------
    -----------------------------------------------------------------------------
+   PROCEDURE all_tables_est(
+       p_owner                   IN  VARCHAR2
+      ,p_table_name              IN  VARCHAR2
+      ,out_table_found           OUT BOOLEAN
+      ,out_num_rows              OUT INTEGER
+      ,out_last_analyzed         OUT TIMESTAMP
+   )
+   AS
+   BEGIN
+      SELECT
+       a.num_rows
+      ,a.last_analyzed 
+      INTO 
+       out_num_rows
+      ,out_last_analyzed 
+      FROM 
+      all_tables a 
+      WHERE 
+          a.owner      = p_owner 
+      AND a.table_name = p_table_name;
+      
+      out_table_found := TRUE;
+ 
+   EXCEPTION
+      WHEN NO_DATA_FOUND
+      THEN
+         out_table_found := FALSE;
+         RETURN;
+      WHEN OTHERS
+      THEN
+         RETURN;
+
+   END all_tables_est;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
    PROCEDURE all_tables(
        p_owner                   IN  VARCHAR2
       ,p_table_name              IN  VARCHAR2
@@ -501,6 +537,10 @@ AS
       AND a.table_name = p_table_name;
       
       out_table_found := TRUE;
+
+      EXECUTE IMMEDIATE 
+      'SELECT COUNT(*) FROM ' || p_owner || '.' || p_table_name
+      INTO out_num_rows;
  
    EXCEPTION
       WHEN NO_DATA_FOUND
