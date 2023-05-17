@@ -142,6 +142,18 @@ putstatus()
       s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/status.json
 }
 
+putstatus_sec()
+{
+   export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+   export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+   python ${s3cmd_location} --quiet                               \
+      --region=${SEC_AWS_REGION}                                  \
+      --host=${SEC_AWS_S3_ENDPOINT}                               \
+      --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT} \
+      put ${statusfile}                                           \
+      s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/status.json
+}
+
 putready()
 {
    export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
@@ -152,6 +164,18 @@ putready()
       --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT} \
       put ${readyfile}                                            \
       s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/ready.json
+}
+
+putready_sec()
+{
+   export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+   export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+   python ${s3cmd_location} --quiet                               \
+      --region=${SEC_AWS_REGION}                                  \
+      --host=${SEC_AWS_S3_ENDPOINT}                               \
+      --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT} \
+      put ${readyfile}                                            \
+      s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/ready.json
 }
 
 putlatest()
@@ -214,23 +238,43 @@ ogrinfo \
 awk '/^  READY \(String\) \= /{$1=$2=$3="";gsub(/^[ ]+/,"",$0);print $0}' > ${readyfile}
 putready
 
+if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+then
+   putready_sec
+fi
+
 ready_status=$(cat ${readyfile} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["ready"];')
 
 if [ "$ready_status" = "nogo" ]
 then
-   echo `date +"%Y-%m-%d %H:%M:%S"`": profile materialized views are in a nogo state. aborting." >> ${logfile}
-   putlog
-   exit 0
+   if [ "${FORCE_REFRESH}" = "True" ]
+   then
+      echo `date +"%Y-%m-%d %H:%M:%S"`": profile materialized views are in a nogo state."           >> ${logfile}
+      echo `date +"%Y-%m-%d %H:%M:%S"`": forcing refresh of $etl_tag due to .env setting."          >> ${logfile}
+      putlog
+   else
+      echo `date +"%Y-%m-%d %H:%M:%S"`": profile materialized views are in a nogo state. aborting." >> ${logfile}
+      putlog
+      exit 0
+   fi
 fi 
 
 etl_tag=$(cat ${readyfile} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["tag"];')
 echo `date +"%Y-%m-%d %H:%M:%S"`": database reports tag $etl_tag ready to extract." >> ${logfile}
 
+
 if [ "$etl_tag" = "$last_tag" ]
 then
-   echo `date +"%Y-%m-%d %H:%M:%S"`": $etl_tag has already been extracted per ready.json in bucket. Exiting." >> ${logfile}
-   putlog
-   exit 0
+   if [ "${FORCE_REFRESH}" = "True" ]
+   then
+      echo `date +"%Y-%m-%d %H:%M:%S"`": $etl_tag has already been extracted per ready.json in bucket."          >> ${logfile}
+      echo `date +"%Y-%m-%d %H:%M:%S"`": forcing refresh of $etl_tag due to .env setting."                       >> ${logfile}
+      putlog
+   else
+      echo `date +"%Y-%m-%d %H:%M:%S"`": $etl_tag has already been extracted per ready.json in bucket. Exiting." >> ${logfile}
+      putlog
+      exit 0
+   fi
 fi
 
 ###############################################################################
@@ -821,6 +865,11 @@ echo "   ,\"julian\":${ts}"       >> ${statusfile}
 echo "}"                          >> ${statusfile}
 putstatus
 
+if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+then
+   putstatus_sec
+fi
+
 echo "{"                          >  ${latestfile}
 echo "    \"tag\":\"${etl_tag}\"" >> ${latestfile}
 echo "   ,\"julian\":${ts}"       >> ${latestfile}
@@ -870,3 +919,4 @@ then
    fi
 
 fi
++
