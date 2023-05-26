@@ -3,9 +3,6 @@
 ###############################################################################
 # Configuration
 
-# Staging directory
-staging_dir=/data/waterspb/loading_dock
-
 # Number of threads used by GDAL processes
 gdal_num_threads=1
 
@@ -96,6 +93,7 @@ export GDAL_DISABLE_READDIR_ON_OPEN=TRUE
 export CPL_VSIL_GZIP_WRITE_PROPERTIES=NO
 export VSI_CACHE=TRUE
 export VSI_CACHE_SIZE=100000000
+staging_dir=${STAGING_DIR}
 
 ###############################################################################
 # Determine the ETL julian ts value for the load to drive logging actions
@@ -919,4 +917,4 @@ then
    fi
 
 fi
-+
+
