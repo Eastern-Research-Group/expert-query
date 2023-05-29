@@ -10,6 +10,8 @@ gdal_num_threads=1
 chunk_size=1000
 
 ###############################################################################
+
+###############################################################################
 # Verify ogr2ogr
 # PATH must include the GDAL bin 
 # such as /usr/app/oracle/product/19.3.0/md/gdal/bin
@@ -106,98 +108,130 @@ readyfile=${staging_dir}/ready_${ts}.json
 
 putlog()
 {
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                               \
-      --region=${PRI_AWS_REGION}                                  \
-      --host=${PRI_AWS_S3_ENDPOINT}                               \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT} \
-      put ${logfile}                                              \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/logfile.txt
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
+   then
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                               \
+         --region=${PRI_AWS_REGION}                                  \
+         --host=${PRI_AWS_S3_ENDPOINT}                               \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT} \
+         put ${logfile}                                              \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/logfile.txt
+         
+   fi
 }
 
 putlog_sec()
 {
-   export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                               \
-      --region=${SEC_AWS_REGION}                                  \
-      --host=${SEC_AWS_S3_ENDPOINT}                               \
-      --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT} \
-      put ${logfile}                                              \
-      s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/logfile.txt
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
+   then
+      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                               \
+         --region=${SEC_AWS_REGION}                                  \
+         --host=${SEC_AWS_S3_ENDPOINT}                               \
+         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT} \
+         put ${logfile}                                              \
+         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/logfile.txt
+         
+   fi
 }
 
 putstatus()
 {
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                               \
-      --region=${PRI_AWS_REGION}                                  \
-      --host=${PRI_AWS_S3_ENDPOINT}                               \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT} \
-      put ${statusfile}                                           \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/status.json
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
+   then
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                               \
+         --region=${PRI_AWS_REGION}                                  \
+         --host=${PRI_AWS_S3_ENDPOINT}                               \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT} \
+         put ${statusfile}                                           \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/status.json
+         
+   fi
 }
 
 putstatus_sec()
 {
-   export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                               \
-      --region=${SEC_AWS_REGION}                                  \
-      --host=${SEC_AWS_S3_ENDPOINT}                               \
-      --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT} \
-      put ${statusfile}                                           \
-      s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/status.json
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
+   then
+      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                               \
+         --region=${SEC_AWS_REGION}                                  \
+         --host=${SEC_AWS_S3_ENDPOINT}                               \
+         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT} \
+         put ${statusfile}                                           \
+         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/status.json
+         
+   fi
 }
 
 putready()
 {
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                               \
-      --region=${PRI_AWS_REGION}                                  \
-      --host=${PRI_AWS_S3_ENDPOINT}                               \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT} \
-      put ${readyfile}                                            \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/ready.json
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
+   then
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                               \
+         --region=${PRI_AWS_REGION}                                  \
+         --host=${PRI_AWS_S3_ENDPOINT}                               \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT} \
+         put ${readyfile}                                            \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/ready.json
+         
+   fi
 }
 
 putready_sec()
 {
-   export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                               \
-      --region=${SEC_AWS_REGION}                                  \
-      --host=${SEC_AWS_S3_ENDPOINT}                               \
-      --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT} \
-      put ${readyfile}                                            \
-      s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/ready.json
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
+   then
+      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                               \
+         --region=${SEC_AWS_REGION}                                  \
+         --host=${SEC_AWS_S3_ENDPOINT}                               \
+         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT} \
+         put ${readyfile}                                            \
+         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/ready.json
+         
+   fi
 }
 
 putlatest()
 {
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                               \
-      --region=${PRI_AWS_REGION}                                  \
-      --host=${PRI_AWS_S3_ENDPOINT}                               \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT} \
-      put ${latestfile}                                           \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/latest.json
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
+   then
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                               \
+         --region=${PRI_AWS_REGION}                                  \
+         --host=${PRI_AWS_S3_ENDPOINT}                               \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT} \
+         put ${latestfile}                                           \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/latest.json
+         
+   fi
 }
 
 putlatest_sec()
 {
-   export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                               \
-      --region=${SEC_AWS_REGION}                                  \
-      --host=${SEC_AWS_S3_ENDPOINT}                               \
-      --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT} \
-      put ${latestfile}                                           \
-      s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/latest.json
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
+   then
+      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                               \
+         --region=${SEC_AWS_REGION}                                  \
+         --host=${SEC_AWS_S3_ENDPOINT}                               \
+         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT} \
+         put ${latestfile}                                           \
+         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/latest.json
+         
+   fi
 }
 
 echo `date +"%Y-%m-%d %H:%M:%S"`": Starting ATTAINS profile ETL for ${ts}" >> ${logfile}
@@ -282,9 +316,17 @@ fi
 # 32 bit mode which bombs when the archive tops 2GB.  However when -fz is expressly
 # provided this seems to trigger some internal logic that forces over to 64 bit processing.
 #
-# A clause may be provided for testing a limited set of data to validate the workflow
-#clause="WHERE rownum <= 100"
-clause=""
+# A clause may be provided in the .env secrets file for testing 
+# a limited set of data to validate the workflow
+#WHERE_CLAUSE="WHERE rownum <= 100"
+if [ ! -z "${WHERE_CLAUSE}" ]
+then
+   clause="${WHERE_CLAUSE}"
+
+else
+   clause=""
+
+fi
 
 thread1()
 {   
@@ -300,41 +342,45 @@ thread1()
       -lco STRING_QUOTING=IF_NEEDED                         |          \
    gzip -q > ${staging_dir}/actions_${ts}.csv.gz
 
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading actions gz to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --mime-type=application/gzip                                     \
-      --no-guess-mime-type                                             \
-      --add-header=content-encoding:gzip                               \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/actions_${ts}.csv.gz                          \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/actions.csv.gz
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --mime-type=application/gzip                                  \
-         --no-guess-mime-type                                          \
-         --add-header=content-encoding:gzip                            \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/actions_${ts}.csv.gz                       \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/actions.csv.gz
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading actions gz to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --mime-type=application/gzip                                     \
+         --no-guess-mime-type                                             \
+         --add-header=content-encoding:gzip                               \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/actions_${ts}.csv.gz                          \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/actions.csv.gz
          
-      if [ $? -ne 0 ]
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
       then
-         echo "s3cmd failed against secondary credentials."
-         exit -1
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --mime-type=application/gzip                                  \
+            --no-guess-mime-type                                          \
+            --add-header=content-encoding:gzip                            \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/actions_${ts}.csv.gz                       \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/actions.csv.gz
+            
+         if [ $? -ne 0 ]
+         then
+            echo "s3cmd failed against secondary credentials."
+            exit -1
+         fi
+      
       fi
-   
+      
    fi
       
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating actions zipfile." >> ${logfile}
@@ -343,31 +389,40 @@ thread1()
    gzip -q -d -c ${staging_dir}/actions_${ts}.csv.gz > ${staging_dir}/actions.csv & \
       zip -q -j -fz --fifo ${staging_dir}/actions_${ts}.csv.zip ${staging_dir}/actions.csv
    rm -Rf ${staging_dir}/actions.csv
-      
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading actions zip to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/actions_${ts}.csv.zip                         \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/actions.csv.zip
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
-   then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/actions_${ts}.csv.zip                      \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/actions.csv.zip
    
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
+   then   
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading actions zip to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/actions_${ts}.csv.zip                         \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/actions.csv.zip
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/actions_${ts}.csv.zip                      \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/actions.csv.zip
+      
+      fi
+      
    fi
+   
+   profile_actions_size_raw=$(unzip -Zt "${staging_dir}/actions_${ts}.csv.zip" | awk '{ print $3 }')
+   profile_actions_size_gz=$(stat -c%s "${staging_dir}/actions_${ts}.csv.gz")
+   profile_actions_size_zip=$(stat -c%s "${staging_dir}/actions_${ts}.csv.zip")
+   echo "profile_actions.csv,${profile_actions_size_raw},${profile_actions_size_gz},${profile_actions_size_zip}" >> ${staging_dir}/thread.txt
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of actions complete." >> ${logfile}   
    
@@ -383,34 +438,38 @@ thread1()
       -lco STRING_QUOTING=IF_NEEDED                         |          \
    gzip -q > ${staging_dir}/assessment_units_${ts}.csv.gz
     
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessment_units gz to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --mime-type=application/gzip                                     \
-      --no-guess-mime-type                                             \
-      --add-header=content-encoding:gzip                               \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/assessment_units_${ts}.csv.gz                 \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessment_units.csv.gz
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --mime-type=application/gzip                                  \
-         --no-guess-mime-type                                          \
-         --add-header=content-encoding:gzip                            \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/assessment_units_${ts}.csv.gz              \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessment_units.csv.gz
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessment_units gz to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --mime-type=application/gzip                                     \
+         --no-guess-mime-type                                             \
+         --add-header=content-encoding:gzip                               \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/assessment_units_${ts}.csv.gz                 \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessment_units.csv.gz
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --mime-type=application/gzip                                  \
+            --no-guess-mime-type                                          \
+            --add-header=content-encoding:gzip                            \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/assessment_units_${ts}.csv.gz              \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessment_units.csv.gz
+         
+      fi
       
    fi
       
@@ -421,29 +480,38 @@ thread1()
       zip -q -j -fz --fifo ${staging_dir}/assessment_units_${ts}.csv.zip ${staging_dir}/assessment_units.csv
    rm -Rf ${staging_dir}/assessment_units.csv
    
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessment_units zip to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/assessment_units_${ts}.csv.zip                \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessment_units.csv.zip
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/assessment_units_${ts}.csv.zip             \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessment_units.csv.zip
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessment_units zip to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/assessment_units_${ts}.csv.zip                \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessment_units.csv.zip
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/assessment_units_${ts}.csv.zip             \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessment_units.csv.zip
+      fi
+      
    fi
+   
+   profile_assessment_units_size_raw=$(unzip -Zt "${staging_dir}/assessment_units_${ts}.csv.zip" | awk '{ print $3 }')
+   profile_assessment_units_size_gz=$(stat -c%s "${staging_dir}/assessment_units_${ts}.csv.gz")
+   profile_assessment_units_size_zip=$(stat -c%s "${staging_dir}/assessment_units_${ts}.csv.zip")
+   echo "profile_assessment_units.csv,${profile_assessment_units_size_raw},${profile_assessment_units_size_gz},${profile_assessment_units_size_zip}" >> ${staging_dir}/thread.txt
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of assessment_units complete." >> ${logfile} 
    
@@ -459,34 +527,38 @@ thread1()
       -lco STRING_QUOTING=IF_NEEDED                         |          \
    gzip -q > ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.gz
       
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessment_units_monitoring_locations gz to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --mime-type=application/gzip                                     \
-      --no-guess-mime-type                                             \
-      --add-header=content-encoding:gzip                               \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.gz \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessment_units_monitoring_locations.csv.gz
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --mime-type=application/gzip                                  \
-         --no-guess-mime-type                                          \
-         --add-header=content-encoding:gzip                            \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessment_units_monitoring_locations gz to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --mime-type=application/gzip                                     \
+         --no-guess-mime-type                                             \
+         --add-header=content-encoding:gzip                               \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
          put ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.gz \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessment_units_monitoring_locations.csv.gz
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessment_units_monitoring_locations.csv.gz
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --mime-type=application/gzip                                  \
+            --no-guess-mime-type                                          \
+            --add-header=content-encoding:gzip                            \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.gz \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessment_units_monitoring_locations.csv.gz
+         
+      fi
       
    fi
       
@@ -497,30 +569,39 @@ thread1()
       zip -q -j -fz --fifo ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.zip ${staging_dir}/assessment_units_monitoring_locations.csv
    rm -Rf ${staging_dir}/assessment_units_monitoring_locations.csv
    
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessment_units_monitoring_locations zip to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.zip \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessment_units_monitoring_locations.csv.zip
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessment_units_monitoring_locations zip to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
          put ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.zip \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessment_units_monitoring_locations.csv.zip
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessment_units_monitoring_locations.csv.zip
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.zip \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessment_units_monitoring_locations.csv.zip
+         
+      fi
       
    fi
+   
+   profile_assessment_units_monitoring_locations_size_raw=$(unzip -Zt "${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.zip" | awk '{ print $3 }')
+   profile_assessment_units_monitoring_locations_size_gz=$(stat -c%s "${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.gz")
+   profile_assessment_units_monitoring_locations_size_zip=$(stat -c%s "${staging_dir}/assessment_units_monitoring_locations_${ts}.csv.zip")
+   echo "profile_assessment_units_monitoring_locations.csv,${profile_assessment_units_monitoring_locations_size_raw},${profile_assessment_units_monitoring_locations_size_gz},${profile_assessment_units_monitoring_locations_size_zip}" >> ${staging_dir}/thread.txt
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of assessment_units_monitoring_locations complete." >> ${logfile} 
    
@@ -536,35 +617,39 @@ thread1()
       -lco STRING_QUOTING=IF_NEEDED                         |          \
    gzip -q > ${staging_dir}/sources_${ts}.csv.gz
       
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading sources files to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --mime-type=application/gzip                                     \
-      --no-guess-mime-type                                             \
-      --add-header=content-encoding:gzip                               \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/sources_${ts}.csv.gz                          \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/sources.csv.gz
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --mime-type=application/gzip                                  \
-         --no-guess-mime-type                                          \
-         --add-header=content-encoding:gzip                            \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/sources_${ts}.csv.gz                       \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/sources.csv.gz
-   
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading sources files to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --mime-type=application/gzip                                     \
+         --no-guess-mime-type                                             \
+         --add-header=content-encoding:gzip                               \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/sources_${ts}.csv.gz                          \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/sources.csv.gz
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --mime-type=application/gzip                                  \
+            --no-guess-mime-type                                          \
+            --add-header=content-encoding:gzip                            \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/sources_${ts}.csv.gz                       \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/sources.csv.gz
+      
+      fi
+      
    fi
       
    echo `date +"%Y-%m-%d %H:%M:%S"`": Creating sources zipfile." >> ${logfile}
@@ -574,31 +659,40 @@ thread1()
       zip -q -j -fz --fifo ${staging_dir}/sources_${ts}.csv.zip ${staging_dir}/sources.csv
    rm -Rf ${staging_dir}/sources.csv
    
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading sources zip to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/sources_${ts}.csv.zip                         \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/sources.csv.zip
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/sources_${ts}.csv.zip                      \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/sources.csv.zip
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading sources zip to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/sources_${ts}.csv.zip                         \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/sources.csv.zip
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/sources_${ts}.csv.zip                      \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/sources.csv.zip
+         
+      fi
       
    fi
    
+   profile_sources_size_raw=$(unzip -Zt "${staging_dir}/sources_${ts}.csv.zip" | awk '{ print $3 }')
+   profile_sources_size_gz=$(stat -c%s "${staging_dir}/sources_${ts}.csv.gz")
+   profile_sources_size_zip=$(stat -c%s "${staging_dir}/sources_${ts}.csv.zip")
+   echo "profile_sources.csv,${profile_sources_size_raw},${profile_sources_size_gz},${profile_sources_size_zip}" >> ${staging_dir}/thread.txt
+ 
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of sources complete." >> ${logfile} 
    
    ############################################################################
@@ -613,34 +707,38 @@ thread1()
       -lco STRING_QUOTING=IF_NEEDED                         |          \
    gzip -q > ${staging_dir}/tmdl_${ts}.csv.gz
         
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading tmdl files to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --mime-type=application/gzip                                     \
-      --no-guess-mime-type                                             \
-      --add-header=content-encoding:gzip                               \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/tmdl_${ts}.csv.gz                             \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/tmdl.csv.gz
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --mime-type=application/gzip                                  \
-         --no-guess-mime-type                                          \
-         --add-header=content-encoding:gzip                            \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/tmdl_${ts}.csv.gz                          \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/tmdl.csv.gz
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading tmdl files to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --mime-type=application/gzip                                     \
+         --no-guess-mime-type                                             \
+         --add-header=content-encoding:gzip                               \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/tmdl_${ts}.csv.gz                             \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/tmdl.csv.gz
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --mime-type=application/gzip                                  \
+            --no-guess-mime-type                                          \
+            --add-header=content-encoding:gzip                            \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/tmdl_${ts}.csv.gz                          \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/tmdl.csv.gz
+         
+      fi
       
    fi
       
@@ -651,30 +749,39 @@ thread1()
       zip -q -j -fz --fifo ${staging_dir}/tmdl_${ts}.csv.zip ${staging_dir}/tmdl.csv
    rm -Rf ${staging_dir}/tmdl.csv
    
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading tmdl zip to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/tmdl_${ts}.csv.zip                            \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/tmdl.csv.zip
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/tmdl_${ts}.csv.zip                         \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/tmdl.csv.zip
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading tmdl zip to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/tmdl_${ts}.csv.zip                            \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/tmdl.csv.zip
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/tmdl_${ts}.csv.zip                         \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/tmdl.csv.zip
+         
+      fi
       
    fi
+   
+   profile_tmdl_size_raw=$(unzip -Zt "${staging_dir}/tmdl_${ts}.csv.zip" | awk '{ print $3 }')
+   profile_tmdl_size_gz=$(stat -c%s "${staging_dir}/tmdl_${ts}.csv.gz")
+   profile_tmdl_size_zip=$(stat -c%s "${staging_dir}/tmdl_${ts}.csv.zip")
+   echo "profile_tmdl.csv,${profile_tmdl_size_raw},${profile_tmdl_size_gz},${profile_tmdl_size_zip}" >> ${staging_dir}/thread.txt
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of tmdl complete." >> ${logfile}
    
@@ -696,34 +803,38 @@ thread2()
       -lco STRING_QUOTING=IF_NEEDED                         |          \
    gzip -q > ${staging_dir}/assessments_${ts}.csv.gz
       
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessments gz to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --mime-type=application/gzip                                     \
-      --no-guess-mime-type                                             \
-      --add-header=content-encoding:gzip                               \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/assessments_${ts}.csv.gz                      \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessments.csv.gz
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --mime-type=application/gzip                                  \
-         --no-guess-mime-type                                          \
-         --add-header=content-encoding:gzip                            \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/assessments_${ts}.csv.gz                   \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessments.csv.gz
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessments gz to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --mime-type=application/gzip                                     \
+         --no-guess-mime-type                                             \
+         --add-header=content-encoding:gzip                               \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/assessments_${ts}.csv.gz                      \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessments.csv.gz
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --mime-type=application/gzip                                  \
+            --no-guess-mime-type                                          \
+            --add-header=content-encoding:gzip                            \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/assessments_${ts}.csv.gz                   \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessments.csv.gz
+         
+      fi
       
    fi
       
@@ -734,30 +845,39 @@ thread2()
       zip -q -j -fz --fifo ${staging_dir}/assessments_${ts}.csv.zip ${staging_dir}/assessments.csv
    rm -Rf ${staging_dir}/assessments.csv
    
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessments zip to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/assessments_${ts}.csv.zip                     \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessments.csv.zip
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/assessments_${ts}.csv.zip                  \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessments.csv.zip
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading assessments zip to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/assessments_${ts}.csv.zip                     \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/assessments.csv.zip
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/assessments_${ts}.csv.zip                  \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/assessments.csv.zip
+         
+      fi
       
    fi
+   
+   profile_assessments_size_raw=$(unzip -Zt "${staging_dir}/assessments_${ts}.csv.zip" | awk '{ print $3 }')
+   profile_assessments_size_gz=$(stat -c%s "${staging_dir}/assessments_${ts}.csv.gz")
+   profile_assessments_size_zip=$(stat -c%s "${staging_dir}/assessments_${ts}.csv.zip")
+   echo "profile_assessments.csv,${profile_assessments_size_raw},${profile_assessments_size_gz},${profile_assessments_size_zip}" >> ${staging_dir}/thread.txt
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of assessments complete." >> ${logfile}
    
@@ -779,34 +899,38 @@ thread3()
       -lco STRING_QUOTING=IF_NEEDED                         |          \
    gzip -q > ${staging_dir}/catchment_correspondence_${ts}.csv.gz
 
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading catchment_correspondence gz to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --mime-type=application/gzip                                     \
-      --no-guess-mime-type                                             \
-      --add-header=content-encoding:gzip                               \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/catchment_correspondence_${ts}.csv.gz         \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/catchment_correspondence.csv.gz
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --mime-type=application/gzip                                  \
-         --no-guess-mime-type                                          \
-         --add-header=content-encoding:gzip                            \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/catchment_correspondence_${ts}.csv.gz      \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/catchment_correspondence.csv.gz
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading catchment_correspondence gz to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --mime-type=application/gzip                                     \
+         --no-guess-mime-type                                             \
+         --add-header=content-encoding:gzip                               \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/catchment_correspondence_${ts}.csv.gz         \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/catchment_correspondence.csv.gz
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --mime-type=application/gzip                                  \
+            --no-guess-mime-type                                          \
+            --add-header=content-encoding:gzip                            \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/catchment_correspondence_${ts}.csv.gz      \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/catchment_correspondence.csv.gz
+         
+      fi
       
    fi
       
@@ -817,30 +941,39 @@ thread3()
       zip -q -j -fz --fifo ${staging_dir}/catchment_correspondence_${ts}.csv.zip ${staging_dir}/catchment_correspondence.csv
    rm -Rf ${staging_dir}/catchment_correspondence.csv
    
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading catchment_correspondence zip to S3." >> ${logfile}
-   export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
-   export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
-   python ${s3cmd_location} --quiet                                    \
-      --multipart-chunk-size-mb ${chunk_size}                          \
-      --region=${PRI_AWS_REGION}                                       \
-      --host=${PRI_AWS_S3_ENDPOINT}                                    \
-      --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
-      put ${staging_dir}/catchment_correspondence_${ts}.csv.zip        \
-      s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/catchment_correspondence.csv.zip
-      
-   if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
    then
-      export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
-      export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
-      python ${s3cmd_location} --quiet                                 \
-         --multipart-chunk-size-mb ${chunk_size}                       \
-         --region=${SEC_AWS_REGION}                                    \
-         --host=${SEC_AWS_S3_ENDPOINT}                                 \
-         --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
-         put ${staging_dir}/catchment_correspondence_${ts}.csv.zip     \
-         s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/catchment_correspondence.csv.zip
+      echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading catchment_correspondence zip to S3." >> ${logfile}
+      export AWS_ACCESS_KEY_ID=$PRI_AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$PRI_AWS_SECRET_ACCESS_KEY
+      python ${s3cmd_location} --quiet                                    \
+         --multipart-chunk-size-mb ${chunk_size}                          \
+         --region=${PRI_AWS_REGION}                                       \
+         --host=${PRI_AWS_S3_ENDPOINT}                                    \
+         --host-bucket=${PRI_AWS_BUCKET_NAME}.${PRI_AWS_S3_ENDPOINT}      \
+         put ${staging_dir}/catchment_correspondence_${ts}.csv.zip        \
+         s3://${PRI_AWS_BUCKET_NAME}${PRI_AWS_BUCKET_DIR}/${ts}/catchment_correspondence.csv.zip
+         
+      if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
+      then
+         export AWS_ACCESS_KEY_ID=$SEC_AWS_ACCESS_KEY_ID
+         export AWS_SECRET_ACCESS_KEY=$SEC_AWS_SECRET_ACCESS_KEY
+         python ${s3cmd_location} --quiet                                 \
+            --multipart-chunk-size-mb ${chunk_size}                       \
+            --region=${SEC_AWS_REGION}                                    \
+            --host=${SEC_AWS_S3_ENDPOINT}                                 \
+            --host-bucket=${SEC_AWS_BUCKET_NAME}.${SEC_AWS_S3_ENDPOINT}   \
+            put ${staging_dir}/catchment_correspondence_${ts}.csv.zip     \
+            s3://${SEC_AWS_BUCKET_NAME}${SEC_AWS_BUCKET_DIR}/${ts}/catchment_correspondence.csv.zip
+         
+      fi
       
    fi
+   
+   profile_catchment_correspondence_size_raw=$(unzip -Zt "${staging_dir}/catchment_correspondence_${ts}.csv.zip" | awk '{ print $3 }')
+   profile_catchment_correspondence_size_gz=$(stat -c%s "${staging_dir}/catchment_correspondence_${ts}.csv.gz")
+   profile_catchment_correspondence_size_zip=$(stat -c%s "${staging_dir}/catchment_correspondence_${ts}.csv.zip")
+   echo "profile_catchment_correspondence.csv,${profile_catchment_correspondence_size_raw},${profile_catchment_correspondence_size_gz},${profile_catchment_correspondence_size_zip}" >> ${staging_dir}/thread.txt
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of catchment_correspondence complete." >> ${logfile}
    
@@ -848,6 +981,7 @@ thread3()
    putlog
 }
 
+rm -Rf ${staging_dir}/thread.txt
 thread1 &
 thread2 &
 thread3 &
@@ -858,9 +992,37 @@ echo `date +"%Y-%m-%d %H:%M:%S"`": All threads complete." >> ${logfile}
 ###############################################################################
 # Write out the status and latest files
 echo "{"                          >  ${statusfile}
-echo "    \"tag\":\"${etl_tag}\"" >> ${statusfile}
-echo "   ,\"julian\":${ts}"       >> ${statusfile}
-echo "}"                          >> ${statusfile}
+echo "\"tag\":\"${etl_tag}\"" >> ${statusfile}
+echo ",\"julian\":${ts}"       >> ${statusfile}
+echo ",\"files\":["            >> ${statusfile}
+
+z=0
+while read -r line
+do
+   if [ $z -eq 1 ]
+   then
+      echo "," >> ${statusfile}
+   
+   fi
+
+   nm=$(echo "$line" | cut -d',' -f1)
+   rw=$(echo "$line" | cut -d',' -f2)
+   gz=$(echo "$line" | cut -d',' -f3)
+   zp=$(echo "$line" | cut -d',' -f4)
+   
+   echo "{"                     >> ${statusfile}
+   echo "\"name\":\"${nm}\""    >> ${statusfile}
+   echo ",\"csv_size\":${rw}"   >> ${statusfile}
+   echo ",\"gz_size\":${gz}"    >> ${statusfile}
+   echo ",\"zip_size\":${zp}"   >> ${statusfile}
+   echo "}"                     >> ${statusfile}
+
+   z=1
+done < ${staging_dir}/thread.txt
+rm -Rf ${staging_dir}/thread.txt
+
+echo "]"                        >> ${statusfile}
+echo "}"                        >> ${statusfile}
 putstatus
 
 if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
@@ -868,10 +1030,10 @@ then
    putstatus_sec
 fi
 
-echo "{"                          >  ${latestfile}
-echo "    \"tag\":\"${etl_tag}\"" >> ${latestfile}
-echo "   ,\"julian\":${ts}"       >> ${latestfile}
-echo "}"                          >> ${latestfile}
+echo "{"                        >  ${latestfile}
+echo "\"tag\":\"${etl_tag}\""   >> ${latestfile}
+echo ",\"julian\":${ts}"        >> ${latestfile}
+echo "}"                        >> ${latestfile}
 putlatest
 
 if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
@@ -917,4 +1079,3 @@ then
    fi
 
 fi
-
