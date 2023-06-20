@@ -847,6 +847,202 @@ AS
       RETURN str_results;
    
    END go_nogo;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   FUNCTION ts2json(
+      p_in TIMESTAMP
+   ) RETURN VARCHAR2
+   AS
+   BEGIN
+      IF p_in IS NULL
+      THEN
+         RETURN 'null';
+         
+      ELSE
+         RETURN '"' || TO_CHAR(
+             p_in
+            ,'YYYY-MM-DD"T"HH24:MI:SS.FF2TZR'
+         ) || '"';
+         
+      END IF;
+      
+   END ts2json;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   FUNCTION num2json(
+      p_in NUMBER
+   ) RETURN VARCHAR2
+   AS
+   BEGIN
+      IF p_in IS NULL
+      THEN
+         RETURN 'null';
+         
+      ELSE
+         RETURN TO_CHAR(p_in);
+         
+      END IF;
+      
+   END num2json;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   FUNCTION boo2json(
+      p_in BOOLEAN
+   ) RETURN VARCHAR2
+   AS
+   BEGIN
+      IF p_in IS NULL
+      THEN
+         RETURN 'null';
+         
+      ELSE
+         IF p_in
+         THEN
+            RETURN 'true';
+            
+         ELSE
+            RETURN 'false';
+            
+         END IF;
+         
+      END IF;
+      
+   END boo2json;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   FUNCTION inv2json(
+      p_in INTERVAL DAY TO SECOND
+   ) RETURN VARCHAR2
+   AS
+   BEGIN
+      IF p_in IS NULL
+      THEN
+         RETURN 'null';
+         
+      ELSE
+         RETURN '"' || TO_CHAR(
+            EXTRACT(DAY FROM p_in) * 24 + EXTRACT(HOUR FROM p_in)
+         ) || ':' || TO_CHAR(
+            EXTRACT(MINUTE FROM p_in), 'fm00' 
+         ) || '"';
+         
+      END IF;
+      
+   END inv2json;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   FUNCTION str2json(
+      p_in VARCHAR2
+   ) RETURN VARCHAR2
+   AS
+   BEGIN
+      IF p_in IS NULL
+      THEN
+         RETURN 'null';
+         
+      ELSE
+         RETURN '"' || p_in || '"';
+         
+      END IF;
+      
+   END str2json;
+   
+   -----------------------------------------------------------------------------
+   -----------------------------------------------------------------------------
+   FUNCTION mv_counts(
+      f                          IN  VARCHAR2 DEFAULT 'JSON'
+   )
+   RETURN CLOB
+   AS
+      str_results               CLOB;
+      boo_table_found           BOOLEAN;
+      boo_mview_found           BOOLEAN;
+      int_num_rows              INTEGER;
+      dat_last_analyzed         TIMESTAMP;
+      str_staleness             VARCHAR2(4000 Char);
+      str_last_refresh_type     VARCHAR2(4000 Char);
+      dat_last_refresh_date     TIMESTAMP;
+      dat_last_refresh_end_time TIMESTAMP;
+      inv_last_refresh_elapsed  INTERVAL DAY TO SECOND;
+      str_fresh_stats           VARCHAR2(4000 Char);
+      
+   BEGIN
+   
+      str_results := '{"details":[';
+      
+      FOR i IN 1 .. util.ary_profiles.COUNT
+      LOOP
+         IF i > 1
+         THEN
+            str_results := str_results || ',';
+            
+         END IF;
+      
+         str_results := str_results || '{"name":"attains_app.' || LOWER(util.ary_profiles(i)) || '"';
+         
+         all_tables(
+             p_owner                   => 'ATTAINS_APP'
+            ,p_table_name              => util.ary_profiles(i)
+            ,out_table_found           => boo_table_found
+            ,out_num_rows              => int_num_rows
+            ,out_last_analyzed         => dat_last_analyzed
+         );
+         
+         all_mviews(
+             p_owner                   => 'ATTAINS_APP'
+            ,p_mview_name              => util.ary_profiles(i)
+            ,out_mview_found           => boo_mview_found
+            ,out_staleness             => str_staleness
+            ,out_last_refresh_date     => dat_last_refresh_date
+            ,out_last_refresh_end_time => dat_last_refresh_end_time
+            ,out_last_refresh_type     => str_last_refresh_type
+            ,out_last_refresh_elapsed  => inv_last_refresh_elapsed
+         );
+         
+         str_results := str_results || ',"table_found":' || boo2json(boo_table_found) || '';
+         str_results := str_results || ',"mview_found":' || boo2json(boo_table_found) || '';
+        
+         str_results := str_results || ',"last_refresh_date":' || ts2json(dat_last_refresh_date) || '';
+         str_results := str_results || ',"last_refresh_end_time":' || ts2json(dat_last_refresh_end_time) || '';
+         str_results := str_results || ',"last_refresh_type":' || str2json(str_last_refresh_type) || '';
+         str_results := str_results || ',"last_refresh_elapsed":' || inv2json(inv_last_refresh_elapsed) || '';
+         
+         str_results := str_results || ',"num_rows":' || num2json(int_num_rows) || '';
+         str_results := str_results || ',"last_analyzed":' || ts2json(dat_last_analyzed) || '';
+         
+         IF  dat_last_refresh_end_time IS NOT NULL
+         AND dat_last_analyzed IS NOT NULL
+         THEN
+            IF dat_last_analyzed > dat_last_refresh_end_time
+            THEN
+               str_fresh_stats := 'true';
+               
+            ELSE
+               str_fresh_stats := 'false';
+            
+            END IF;
+            
+         ELSE
+            str_fresh_stats := 'false';
+            
+         END IF;
+         
+         str_results := str_results || ',"fresh_stats":' || str_fresh_stats || '';
+         
+         str_results := str_results || '}';
+      
+      END LOOP;
+      
+      str_results := str_results || ']}';
+      
+      RETURN str_results;
+   
+   END mv_counts;
 
 END util;
 /
