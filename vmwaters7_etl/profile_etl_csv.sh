@@ -263,12 +263,29 @@ putlog
 
 ###############################################################################
 # Query database if the datasets are in a ready state
+tfile1="$(mktemp /tmp/attains_eq.XXXXXXXXX)"
 ogrinfo \
    OCI:${DB_USERNAME}/${DB_PASSWORD}@${DB_HOSTSTRING}:ATTAINS_APP.PROFILE_TMDL        \
    -q -nomd -nocount -noextent                                                        \
    -sql "SELECT TO_CHAR(attains_eq.util.go_nogo('JSON')) AS ready FROM dual" |        \
-awk '/^  READY \(String\) \= /{$1=$2=$3="";gsub(/^[ ]+/,"",$0);print $0}' > ${readyfile}
+awk '/^  READY \(String\) \= /{$1=$2=$3="";gsub(/^[ ]+/,"",$0);print $0}' > ${tfile1}
+
+tfile2="$(mktemp /tmp/attains_eq.XXXXXXXXX)"
+ogrinfo \
+   OCI:${DB_USERNAME}/${DB_PASSWORD}@${DB_HOSTSTRING}:ATTAINS_APP.PROFILE_TMDL        \
+   -q -nomd -nocount -noextent                                                        \
+   -sql "SELECT TO_CHAR(attains_eq.util.mv_counts('JSON')) AS ready FROM dual" |      \
+awk '/^  READY \(String\) \= /{$1=$2=$3="";gsub(/^[ ]+/,"",$0);print $0}' > ${tfile2}
+
+tfile3="$(mktemp /tmp/attains_eq.XXXXXXXXX)"
+awk  '{print substr($0,1,length($0) - 1)}' ${tfile1} >  ${tfile3}
+echo ',' >> ${tfile3}
+awk  '{print substr($0,2,length($0) - 1)}' ${tfile2} >> ${tfile3}
+awk -vORS="" '1' ${tfile3} > ${readyfile}
 putready
+rm -Rf ${tfile1}
+rm -Rf ${tfile2}
+rm -Rf ${tfile3}
 
 if [ ! -z "$SEC_AWS_ACCESS_KEY_ID" ]
 then
@@ -294,7 +311,6 @@ fi
 etl_tag=$(cat ${readyfile} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["tag"];')
 echo `date +"%Y-%m-%d %H:%M:%S"`": database reports tag $etl_tag ready to extract." >> ${logfile}
 
-
 if [ "$etl_tag" = "$last_tag" ]
 then
    if [ "${FORCE_REFRESH}" = "True" ]
@@ -308,6 +324,9 @@ then
       exit 0
    fi
 fi
+
+
+
 
 ###############################################################################
 # Begin the extract in three threads
