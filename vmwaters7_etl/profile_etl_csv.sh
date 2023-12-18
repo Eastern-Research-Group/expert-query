@@ -263,7 +263,7 @@ fi
 IFS=,
 for envn in ${ENVS}
 do
-   ENV=$envn
+   ENVN=$envn
    setaws
    putlog
    putready
