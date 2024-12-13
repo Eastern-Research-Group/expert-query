@@ -540,7 +540,7 @@ thread1()
    
    ############################################################################
    # PROFILE_TMDL
-   echo `date +"%Y-%m-%d %H:%M:%S"`": Exporting tmdl in thread 5." | tee -a ${logfile}
+   echo `date +"%Y-%m-%d %H:%M:%S"`": Exporting tmdl in thread 1." | tee -a ${logfile}
    ogr2ogr \
       --config GDAL_NUM_THREADS ${gdal_num_threads}                    \
       -f CSV /vsistdout/                                               \
@@ -597,6 +597,135 @@ thread1()
    echo "profile_tmdl.csv,${profile_tmdl_size_raw},${profile_tmdl_size_gz},${profile_tmdl_size_zip}" >> ${staging_dir}/thread.txt
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of tmdl complete." | tee -a ${logfile}
+   
+   ############################################################################
+   # PROFILE_ACTION_DOCUMENTS
+   echo `date +"%Y-%m-%d %H:%M:%S"`": Exporting action_documents in thread 1." | tee -a ${logfile}
+   ogr2ogr \
+      --config GDAL_NUM_THREADS ${gdal_num_threads}                    \
+      -f CSV /vsistdout/                                               \
+      OCI:${DB_USERNAME}/${DB_PASSWORD}@${DB_HOSTSTRING}:ATTAINS_APP.PROFILE_ACTION_DOCUMENTS \
+      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,documentkey,actionid,actiontypename,organizationid,regionid,state,actionname,completiondate,tmdldate,actiondocumenturl FROM ATTAINS_APP.PROFILE_ACTION_DOCUMENTS a ${clause}" \
+      -preserve_fid -lco LINEFORMAT=LF                                 \
+      -lco STRING_QUOTING=IF_NEEDED                         |          \
+   gzip -q > ${staging_dir}/action_documents_${ts}.csv.gz
+   
+   echo `date +"%Y-%m-%d %H:%M:%S"`": Creating action_documents zipfile." | tee -a ${logfile}
+   rm -Rf ${staging_dir}/action_documents.csv
+   mkfifo ${staging_dir}/action_documents.csv
+   gzip -q -d -c ${staging_dir}/action_documents_${ts}.csv.gz > ${staging_dir}/action_documents.csv & \
+      zip -q -j -fz --fifo ${staging_dir}/action_documents_${ts}.csv.zip ${staging_dir}/action_documents.csv
+   rm -Rf ${staging_dir}/action_documents.csv
+   
+   ###############################################################################
+   IFS=,
+   for envn in ${ENVS}
+   do
+      ENVN=$envn
+	   setaws
+     
+	   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
+      then
+         echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading action_documents files to $envn S3." | tee -a ${logfile}
+         python ${s3cmd_location} --quiet                                    \
+            --multipart-chunk-size-mb ${chunk_size}                          \
+            --mime-type=application/gzip                                     \
+            --no-guess-mime-type                                             \
+            --add-header=content-encoding:gzip                               \
+            --region=${AWS_REGION}                                           \
+            --host=${AWS_S3_ENDPOINT}                                        \
+            --host-bucket=${AWS_BUCKET_NAME}.${AWS_S3_ENDPOINT}              \
+            put ${staging_dir}/action_documents_${ts}.csv.gz                 \
+            s3://${AWS_BUCKET_NAME}${AWS_BUCKET_DIR}/${ts}/action_documents.csv.gz
+         
+         echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading action_documents zip to $envn S3." | tee -a ${logfile}
+         python ${s3cmd_location} --quiet                                    \
+            --multipart-chunk-size-mb ${chunk_size}                          \
+            --region=${AWS_REGION}                                           \
+            --host=${AWS_S3_ENDPOINT}                                        \
+            --host-bucket=${AWS_BUCKET_NAME}.${AWS_S3_ENDPOINT}              \
+            put ${staging_dir}/action_documents_${ts}.csv.zip                \
+            s3://${AWS_BUCKET_NAME}${AWS_BUCKET_DIR}/${ts}/action_documents.csv.zip
+         
+      fi
+      
+   done
+   
+   profile_action_documents_size_raw=$(unzip -Zt "${staging_dir}/action_documents_${ts}.csv.zip" | awk '{ print $3 }')
+   profile_action_documents_size_gz=$(stat -c%s "${staging_dir}/action_documents_${ts}.csv.gz")
+   profile_action_documents_size_zip=$(stat -c%s "${staging_dir}/action_documents_${ts}.csv.zip")
+   echo "profile_action_documents.csv,${profile_action_documents_size_raw},${profile_action_documents_size_gz},${profile_action_documents_size_zip}" >> ${staging_dir}/thread.txt
+   
+   echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of action_documents complete." | tee -a ${logfile}
+   
+   ############################################################################
+   # PROFILE_DOCUMENTS
+   rm -Rf ${staging_dir}/docexport.sql
+   rm -Rf ${staging_dir}/documents_text_${ts}.csv
+   
+   echo `date +"%Y-%m-%d %H:%M:%S"`": Exporting documents_text in thread 1." | tee -a ${logfile}
+   echo "SET SQLFORMAT CSV"                                    >  ${staging_dir}/docexport.sql 
+   echo "SET FEEDBACK OFF"                                     >> ${staging_dir}/docexport.sql
+   echo "SPOOL ${staging_dir}/documents_text_${ts}.csv"        >> ${staging_dir}/docexport.sql
+   echo "SELECT CAST(a.row_id AS INTEGER) AS objectid "        >> ${staging_dir}/docexport.sql
+   echo ",a.documentkey,a.documentname,a.documentdesc "        >> ${staging_dir}/docexport.sql
+   echo ",a.documentfilename,a.documentfiletypename "          >> ${staging_dir}/docexport.sql
+   echo ",a.documenttypename,b.documenttext"                   >> ${staging_dir}/docexport.sql
+   echo "FROM attains_app.profile_documents a "                >> ${staging_dir}/docexport.sql
+   echo "JOIN attains_app.profile_documents_text b "           >> ${staging_dir}/docexport.sql
+   echo "ON a.documentkey = b.documentkey; "                   >> ${staging_dir}/docexport.sql
+   echo "SPOOL OFF"                                            >> ${staging_dir}/docexport.sql
+   echo "EXIT;"                                                >> ${staging_dir}/docexport.sql
+   
+   /usr/app/oracle/product/19.3.0/sqlcl/bin/sql ${DB_USERNAME}/${DB_PASSWORD}@${DB_HOSTSTRING} @${staging_dir}/docexport.sql 1> /dev/null
+   sed -i 's/\x0//g' ${staging_dir}/documents_text_${ts}.csv
+   gzip -q < ${staging_dir}/documents_text_${ts}.csv > ${staging_dir}/documents_text_${ts}.csv.gz
+   zip ${staging_dir}/documents_text_${ts}.csv.zip ${staging_dir}/documents_text_${ts}.csv
+   
+   rm -Rf ${staging_dir}/documents_text.csv
+   
+   ###############################################################################
+   IFS=,
+   for envn in ${ENVS}
+   do
+      ENVN=$envn
+	   setaws
+     
+	   if [ -z "${UPLOAD_TO_S3}" ] || [ "${UPLOAD_TO_S3}" = "True" ]
+      then
+         echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading documents_text files to $envn S3." | tee -a ${logfile}
+         python ${s3cmd_location} --quiet                                    \
+            --multipart-chunk-size-mb ${chunk_size}                          \
+            --mime-type=application/gzip                                     \
+            --no-guess-mime-type                                             \
+            --add-header=content-encoding:gzip                               \
+            --region=${AWS_REGION}                                           \
+            --host=${AWS_S3_ENDPOINT}                                        \
+            --host-bucket=${AWS_BUCKET_NAME}.${AWS_S3_ENDPOINT}              \
+            put ${staging_dir}/documents_text_${ts}.csv.gz                 \
+            s3://${AWS_BUCKET_NAME}${AWS_BUCKET_DIR}/${ts}/documents_text.csv.gz
+         
+         echo `date +"%Y-%m-%d %H:%M:%S"`": Uploading documents_text zip to $envn S3." | tee -a ${logfile}
+         python ${s3cmd_location} --quiet                                    \
+            --multipart-chunk-size-mb ${chunk_size}                          \
+            --region=${AWS_REGION}                                           \
+            --host=${AWS_S3_ENDPOINT}                                        \
+            --host-bucket=${AWS_BUCKET_NAME}.${AWS_S3_ENDPOINT}              \
+            put ${staging_dir}/documents_text_${ts}.csv.zip                \
+            s3://${AWS_BUCKET_NAME}${AWS_BUCKET_DIR}/${ts}/documents_text.csv.zip
+         
+      fi
+      
+   done
+   
+   profile_documents_text_size_raw=$(unzip -Zt "${staging_dir}/documents_text_${ts}.csv.zip" | awk '{ print $3 }')
+   profile_documents_text_size_gz=$(stat -c%s "${staging_dir}/documents_text_${ts}.csv.gz")
+   profile_documents_text_size_zip=$(stat -c%s "${staging_dir}/documents_text_${ts}.csv.zip")
+   echo "profile_documents_text.csv,${profile_documents_text_size_raw},${profile_documents_text_size_gz},${profile_documents_text_size_zip}" >> ${staging_dir}/thread.txt
+   
+   echo `date +"%Y-%m-%d %H:%M:%S"`": ETL of action_documents complete." | tee -a ${logfile}
+   
+   ############################################################################  
    
    echo `date +"%Y-%m-%d %H:%M:%S"`": Thread 1 is complete." | tee -a ${logfile}
 
