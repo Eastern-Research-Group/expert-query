@@ -605,7 +605,7 @@ thread1()
       --config GDAL_NUM_THREADS ${gdal_num_threads}                    \
       -f CSV /vsistdout/                                               \
       OCI:${DB_USERNAME}/${DB_PASSWORD}@${DB_HOSTSTRING}:ATTAINS_APP.PROFILE_ACTION_DOCUMENTS \
-      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,documentkey,actionid,actiontypename,organizationid,regionid,state,actionname,completiondate,tmdldate,actiondocumenturl FROM ATTAINS_APP.PROFILE_ACTION_DOCUMENTS a ${clause}" \
+      -sql "SELECT CAST(row_id AS INTEGER) AS objectid,documentkey,actionid,actiontypename,organizationid,organizationtype,organizationname,regionid,state,actionname,completiondate,tmdldate,actiondocumenturl FROM ATTAINS_APP.PROFILE_ACTION_DOCUMENTS a ${clause}" \
       -preserve_fid -lco LINEFORMAT=LF                                 \
       -lco STRING_QUOTING=IF_NEEDED                         |          \
    gzip -q > ${staging_dir}/action_documents_${ts}.csv.gz
