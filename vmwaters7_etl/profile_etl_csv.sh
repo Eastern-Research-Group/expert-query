@@ -682,7 +682,8 @@ thread1()
    gzip -q < ${staging_dir}/documents_text_${ts}.csv > ${staging_dir}/documents_text_${ts}.csv.gz
    zip ${staging_dir}/documents_text_${ts}.csv.zip ${staging_dir}/documents_text_${ts}.csv
    
-   rm -Rf ${staging_dir}/documents_text.csv
+   rm -f ${staging_dir}/documents_text_${ts}.csv
+   rm -f ${staging_dir}/docexport.sql  
    
    ###############################################################################
    IFS=,
@@ -951,6 +952,12 @@ then
       
       rm -f ${staging_dir}/catchment_correspondence_${ts}.csv.gz
       rm -f ${staging_dir}/catchment_correspondence_${ts}.csv.zip
+      
+      rm -f ${staging_dir}/action_documents_${ts}.csv.gz
+      rm -f ${staging_dir}/action_documents_${ts}.csv.zip
+      
+      rm -f ${staging_dir}/documents_text_${ts}.csv.gz
+      rm -f ${staging_dir}/documents_text_${ts}.csv.zip
       
       rm -f ${staging_dir}/log_${ts}.txt
       rm -f ${staging_dir}/status_${ts}.json
