@@ -47,7 +47,7 @@ export const Table = ({
   };
 
   const [sortDir, setSortDir] = useState<'ascending' | 'descending'>(
-    getSortDirection(initialSortDir), // FIXME: This is a bug (possible race condition with `epa.js`), it should be `initialSortDir`
+    initialSortDir,
   );
   const [sortIndex, setSortIndex] = useState(initialSortIndex);
 
