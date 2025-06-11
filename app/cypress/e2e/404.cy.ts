@@ -11,15 +11,20 @@ Cypress.on('uncaught:exception', (_err, _runnable) => {
 describe('404 Page', () => {
   it('404 Redirect', () => {
     cy.visit('/bogus-route');
-    cy.url().should('eq', 'http://localhost:3002/404.html?src=http://localhost:3000/bogus-route');
-    cy.findByRole('heading', { name: 'Sorry, but this web page does not exist.' }).should('be.visible')
+    cy.wait(2000);
+    cy.origin('http://localhost:3002', () => {
+      cy.url().should('eq', 'http://localhost:3002/404.html?src=http://localhost:3000/bogus-route');
+      cy.get('.page-title').first().contains('Sorry, but this web page does not exist.').should('be.visible');
+    });
   });
 
   it('404 Redirect non-existent profile', () => {
-    cy.wait(500);
     cy.visit('/attains/bogus-route');
-    cy.url().should('eq', 'http://localhost:3002/404.html?src=http://localhost:3000/attains/bogus-route');
-    cy.findByRole('heading', { name: 'Sorry, but this web page does not exist.' }).should('be.visible')
+    cy.wait(2000);
+    cy.origin('http://localhost:3002', () => {
+      cy.url().should('eq', 'http://localhost:3002/404.html?src=http://localhost:3000/attains/bogus-route');
+      cy.get('.page-title').first().contains('Sorry, but this web page does not exist.').should('be.visible');
+    });
   });
 
   it('Error when lookupFiles service is down', () => {
