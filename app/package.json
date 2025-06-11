@@ -1,6 +1,6 @@
 {
   "name": "expert-query",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "U.S. EPA Expert Query",
   "keywords": [
     "Expert Query",
@@ -15,7 +15,7 @@
     "Max Diebold <max.diebold@erg.com>"
   ],
   "engines": {
-    "node": ">=20.x"
+    "node": ">=22.x"
   },
   "scripts": {
     "client": "cd client && npm run dev",
@@ -29,20 +29,20 @@
     "coverage": "cd server && npm run test && cd .. && npm run client_coverage && node combine_coverage_reports.js"
   },
   "devDependencies": {
-    "@cypress/code-coverage": "3.13.10",
-    "@testing-library/cypress": "10.0.2",
+    "@cypress/code-coverage": "3.14.4",
+    "@testing-library/cypress": "10.0.3",
     "@types/jest": "29.5.14",
     "@types/mocha": "10.0.10",
-    "@types/node": "20.14.2",
+    "@types/node": "22.9.0",
     "@types/testing-library__cypress": "5.0.13",
     "concurrently": "9.1.2",
-    "cypress": "13.17.0",
-    "cypress-real-events": "1.13.0",
-    "eslint-plugin-cypress": "4.1.0",
+    "cypress": "14.4.1",
+    "cypress-real-events": "1.14.0",
+    "eslint-plugin-cypress": "5.1.0",
     "istanbul-lib-coverage": "3.2.2",
     "nyc": "17.1.0",
-    "prettier": "3.4.2",
-    "typescript": "5.7.3"
+    "prettier": "3.5.3",
+    "typescript": "5.8.3"
   },
   "eslintConfig": {
     "extends": [
