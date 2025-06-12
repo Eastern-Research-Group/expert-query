@@ -20,7 +20,7 @@
   "scripts": {
     "start": "nodemon -r dotenv/config --inspect app/server.js dotenv_config_path=./.env.local",
     "start_coverage": "nyc --silent node --env-file=./.env.local app/server.js",
-    "test": "npx rimraf .nyc_output/out.json && npx rimraf coverage && node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --coverageDirectory='coverage'"
+    "test": "npx rimraf .nyc_output/out.json && npx rimraf coverage && node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --coverageDirectory=coverage"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.826.0",
@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@cypress/code-coverage": "3.14.4",
+    "allure-jest": "3.2.2",
     "eslint-config-prettier": "10.1.5",
     "eslint-plugin-prettier": "5.4.1",
     "husky": "9.1.7",
