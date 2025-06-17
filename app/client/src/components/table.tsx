@@ -1,7 +1,7 @@
 /** Adapted from https://github.com/MetroStar/comet/blob/main/packages/comet-uswds/src/components/table/table.tsx */
 import table from '@uswds/uswds/js/usa-table';
 import classNames from 'classnames';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 // types
 import type { ReactNode, UIEvent } from 'react';
 
@@ -47,7 +47,7 @@ export const Table = ({
   };
 
   const [sortDir, setSortDir] = useState<'ascending' | 'descending'>(
-    getSortDirection(initialSortDir), // FIXME: This is a bug (possible race condition with `epa.js`), it should be `initialSortDir`
+    initialSortDir,
   );
   const [sortIndex, setSortIndex] = useState(initialSortIndex);
 
@@ -64,6 +64,15 @@ export const Table = ({
   };
 
   const [width, setWidth] = useState(0);
+
+  // workaround for race condition with epa.js 
+  useEffect(() => {
+    if (sortable && contentRef.current) {
+      table.off(contentRef.current);
+      table.on(contentRef.current);
+    }
+  }, [sortable, sortDir, sortIndex]);
+
 
   return (
     <div className={className}>
@@ -89,12 +98,7 @@ export const Table = ({
           'scroll-container',
         )}
         onScroll={handleScroll}
-        ref={(node) => {
-          contentRef.current = node;
-          if (node && sortable) {
-            table.on(node);
-          }
-        }}
+        ref={contentRef}
       >
         <table
           className={classNames(
