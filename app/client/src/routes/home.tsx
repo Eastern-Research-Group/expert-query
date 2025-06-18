@@ -34,7 +34,7 @@ import { clientUrl, serverUrl } from 'config';
 import { isAbort, postData, useAbort } from 'utils';
 // types
 import type { Content } from 'contexts/content';
-import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
+import type { ChangeEvent, Dispatch, JSX, SetStateAction } from 'react';
 import type { GroupBase } from 'react-select';
 import type { LoadOptions } from 'react-select-async-paginate';
 import type {
@@ -997,7 +997,7 @@ function SelectFilter({
     [secondaryFilterKey],
   );
 
-  const MenuList = wrapMenuList(CustomMenuList);
+  const MenuList = wrapMenuList(CustomMenuList<Option>);
 
   // Memoize the context filters so options can be cached correctly
   const [contextFiltersMemo, setContextFiltersMemo] = useState(contextFilters);

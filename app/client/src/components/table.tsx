@@ -1,7 +1,7 @@
 /** Adapted from https://github.com/MetroStar/comet/blob/main/packages/comet-uswds/src/components/table/table.tsx */
 import table from '@uswds/uswds/js/usa-table';
 import classNames from 'classnames';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 // types
 import type { ReactNode, UIEvent } from 'react';
 
@@ -27,9 +27,24 @@ export const Table = ({
   className,
   tabIndex = -1,
 }: TableProps): React.ReactElement => {
-  const topScrollbarRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
+  const initialized = useRef(false);
 
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const contentRefCallback = useCallback((node: HTMLDivElement) => {
+    contentRef.current = node;
+
+    if (!initialized.current) {
+      table.on(node);
+      initialized.current = true;
+    }
+
+    return () => {
+      if (contentRef.current) table.off(contentRef.current);
+      contentRef.current = null;
+    };
+  }, []);
+
+  const topScrollbarRef = useRef<HTMLDivElement | null>(null);
   const handleScroll = (e: UIEvent<HTMLDivElement>) => {
     const scrollLeft = e.currentTarget.scrollLeft;
     if (contentRef.current) contentRef.current.scrollLeft = scrollLeft;
@@ -47,7 +62,8 @@ export const Table = ({
   };
 
   const [sortDir, setSortDir] = useState<'ascending' | 'descending'>(
-    initialSortDir,
+    // NOTE: This is a workaround for a bug in the USWDS table component. When the component is initialized, it toggles the sort direction from the initial value, so we need to set it to the opposite of the target initial value.
+    getSortDirection(initialSortDir),
   );
   const [sortIndex, setSortIndex] = useState(initialSortIndex);
 
@@ -64,15 +80,6 @@ export const Table = ({
   };
 
   const [width, setWidth] = useState(0);
-
-  // workaround for race condition with epa.js 
-  useEffect(() => {
-    if (sortable && contentRef.current) {
-      table.off(contentRef.current);
-      table.on(contentRef.current);
-    }
-  }, [sortable, sortDir, sortIndex]);
-
 
   return (
     <div className={className}>
@@ -98,7 +105,7 @@ export const Table = ({
           'scroll-container',
         )}
         onScroll={handleScroll}
-        ref={contentRef}
+        ref={contentRefCallback}
       >
         <table
           className={classNames(
