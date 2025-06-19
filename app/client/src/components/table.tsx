@@ -28,9 +28,10 @@ export const Table = ({
   tabIndex = -1,
 }: TableProps): React.ReactElement => {
   const initialized = useRef(false);
-
   const contentRef = useRef<HTMLDivElement | null>(null);
   const contentRefCallback = useCallback((node: HTMLDivElement) => {
+    if (!node) return;
+
     contentRef.current = node;
 
     if (!initialized.current) {
@@ -39,7 +40,6 @@ export const Table = ({
     }
 
     return () => {
-      if (contentRef.current) table.off(contentRef.current);
       contentRef.current = null;
     };
   }, []);
