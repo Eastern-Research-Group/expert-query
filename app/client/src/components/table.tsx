@@ -187,7 +187,7 @@ export const Table = ({
                 row.map((cell) => ({
                   value: isCellSpec(cell) ? cell.value : cell,
                   sortValue: isCellSpec(cell)
-                    ? (cell.sortValue ?? cell.value?.toString() ?? '')
+                    ? (cell.sortValue ?? cell.value ?? '')
                     : cell,
                 })),
               )
