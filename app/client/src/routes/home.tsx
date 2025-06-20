@@ -1193,9 +1193,9 @@ function useProfile(
         setProfile(profiles[profileArg]);
         setProfileOption(
           'dataProfile' in listOptions
-            ? listOptions.dataProfile.find(
+            ? (listOptions.dataProfile.find(
                 (option) => option.value === profileArg,
-              ) ?? null
+              ) ?? null)
             : null,
         );
       }
@@ -1688,7 +1688,7 @@ function removeNulls<T>(fields: Array<T | null>) {
 
 function getStaticOptions(fieldName: string, staticOptions: StaticOptions) {
   return staticOptions.hasOwnProperty(fieldName)
-    ? staticOptions[fieldName as keyof StaticOptions] ?? []
+    ? (staticOptions[fieldName as keyof StaticOptions] ?? [])
     : null;
 }
 
@@ -1903,7 +1903,7 @@ async function matchOptions(
   }
 
   const matchesArray = Array.from(matches);
-  return multiple ? matchesArray : matchesArray.pop() ?? null;
+  return multiple ? matchesArray : (matchesArray.pop() ?? null);
 }
 
 function matchYear(values: InputValue) {
