@@ -39,6 +39,10 @@ function isWritable(stream) {
 }
 
 export default class StreamingService {
+  /**
+   * @param {express.Response} outStream output response stream
+   * @param {'csv'|'tsv'|'xlsx'|'json'|''} format export format file type
+   */
   static getOptions = (outStream, format) => {
     return {
       preHook: () => {
@@ -49,6 +53,12 @@ export default class StreamingService {
       },
       errorHandler: (error) => {
         if (!error) return;
+        // exceljs writes the workbook straight to outStream and ends it itself,
+        // so pipeline sees its destination close while the transform is still
+        // finishing and reports a premature close even though the whole file
+        // was delivered. A finished writable means nothing was actually lost.
+        if (outStream?.writableFinished) return;
+
         if (isClientDisconnect(error)) {
           log.debug('Out stream closed before completion: ' + error);
           return;

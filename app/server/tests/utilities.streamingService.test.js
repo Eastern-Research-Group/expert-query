@@ -285,6 +285,41 @@ describe('StreamingService tests', () => {
     expect(mocks.logDebug).toHaveBeenCalledTimes(2);
   });
 
+  test('stays silent when the response finished before pipeline tore it down', async () => {
+    const { StreamingService, mocks } = await loadStreamingService();
+    const res = createResponse();
+    const { errorHandler } = StreamingService.getOptions(res, 'xlsx');
+
+    // exceljs ends the response itself, so pipeline reports a premature close
+    // on a response that was in fact fully delivered
+    res.end();
+    await settle(10);
+
+    const premature = new Error('Premature close');
+    premature.code = 'ERR_STREAM_PREMATURE_CLOSE';
+    errorHandler(premature);
+
+    expect(res.writableFinished).toBe(true);
+    expect(mocks.logWarn).not.toHaveBeenCalled();
+    expect(mocks.logDebug).not.toHaveBeenCalled();
+  });
+
+  test('still reports a premature close on an unfinished response', async () => {
+    const { StreamingService, mocks } = await loadStreamingService();
+    const res = createResponse();
+    const { errorHandler } = StreamingService.getOptions(res, 'xlsx');
+
+    // a genuine disconnect leaves the response unfinished
+    res.destroy();
+
+    const premature = new Error('Premature close');
+    premature.code = 'ERR_STREAM_PREMATURE_CLOSE';
+    errorHandler(premature);
+
+    expect(res.writableFinished).toBe(false);
+    expect(mocks.logDebug).toHaveBeenCalledTimes(1);
+  });
+
   test('logs unexpected stream errors as warnings', async () => {
     const { StreamingService, mocks } = await loadStreamingService();
     const res = createResponse();
