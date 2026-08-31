@@ -532,6 +532,9 @@
             "$ref": "#/components/parameters/assessmentMethodsParam"
           },
           {
+            "$ref": "#/components/parameters/assessmentParameterAgencyParam"
+          },
+          {
             "$ref": "#/components/parameters/assessmentTypesParam"
           },
           {
@@ -542,6 +545,9 @@
           },
           {
             "$ref": "#/components/parameters/assessmentUnitStatusParam"
+          },
+          {
+            "$ref": "#/components/parameters/assessmentUseAgencyParam"
           },
           {
             "$ref": "#/components/parameters/associatedActionAgencyParam"
@@ -759,6 +765,9 @@
             "$ref": "#/components/parameters/assessmentMethodsParam"
           },
           {
+            "$ref": "#/components/parameters/assessmentParameterAgencyParam"
+          },
+          {
             "$ref": "#/components/parameters/assessmentTypesParam"
           },
           {
@@ -769,6 +778,9 @@
           },
           {
             "$ref": "#/components/parameters/assessmentUnitStatusParam"
+          },
+          {
+            "$ref": "#/components/parameters/assessmentUseAgencyParam"
           },
           {
             "$ref": "#/components/parameters/associatedActionAgencyParam"
@@ -4121,6 +4133,18 @@
           }
         }
       },
+      "assessmentParameterAgencyParam": {
+        "name": "assessmentParameterAgency",
+        "in": "query",
+        "explode": true,
+        "example": "EPA",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
       "assessmentTypesParam": {
         "name": "assessmentTypes",
         "in": "query",
@@ -4162,6 +4186,18 @@
         "in": "query",
         "explode": true,
         "example": "A",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "assessmentUseAgencyParam": {
+        "name": "assessmentUseAgency",
+        "in": "query",
+        "explode": true,
+        "example": "EPA",
         "schema": {
           "type": "array",
           "items": {
