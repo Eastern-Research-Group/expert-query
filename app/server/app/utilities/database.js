@@ -104,12 +104,13 @@ const pool = new pg.Pool({
   port: dbPort,
   password: dbPassword,
   database: dbName,
-  max: parseInt(process.env.DB_POOL_MAX),
+  max: Number.parseInt(process.env.DB_POOL_MAX),
   connectionTimeoutMillis:
-    parseInt(process.env.DB_CONNECTION_TIMEOUT) || undefined,
-  statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT) || undefined,
+    Number.parseInt(process.env.DB_CONNECTION_TIMEOUT) || undefined,
+  statement_timeout:
+    Number.parseInt(process.env.DB_STATEMENT_TIMEOUT) || undefined,
   idle_in_transaction_session_timeout:
-    parseInt(process.env.DB_IDLE_IN_TRANSACTION_TIMEOUT) || undefined,
+    Number.parseInt(process.env.DB_IDLE_IN_TRANSACTION_TIMEOUT) || undefined,
   ssl: dbSsl ? { rejectUnauthorized: false } : undefined,
 });
 pool.on('error', (err, client) => {
