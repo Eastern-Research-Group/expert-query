@@ -201,7 +201,7 @@ function createLatestSubquery(req, profile, params, columnName, columnType) {
 /**
  * Creates a stream object from a query.
  * @param {Object} query KnexJS query object
- * @param {Express.Response} res
+ * @param {express.Response} res
  * @param {string} format the format of the file attachment
  * @param {Object} excelDoc Excel workbook and worksheet objects
  * @param {Object} pageOptions page number and page size for paginated JSON
@@ -219,12 +219,6 @@ async function createStream(
   // handler instead of throwing from a callback the request can no longer see
   const client = await pool.connect();
 
-  const qStream = new QueryStream(query.toString(), [], {
-    batchSize: parseInt(process.env.STREAM_BATCH_SIZE),
-    highWaterMark: parseInt(process.env.STREAM_HIGH_WATER_MARK),
-  });
-  const stream = client.query(qStream);
-
   // release the pooled client exactly once, however the stream finishes.
   // pg-pool throws on a double release and these events can fire in
   // combination. Passing the error tells pg to discard a connection that was
@@ -235,18 +229,38 @@ async function createStream(
     released = true;
     client.release(streamErr);
   };
+
+  // the response can close while the queries leading up to here are still running
+  if (res.closed || res.destroyed) {
+    release();
+    return;
+  }
+
+  const qStream = new QueryStream(query.toString(), [], {
+    batchSize: parseInt(process.env.STREAM_BATCH_SIZE),
+    highWaterMark: parseInt(process.env.STREAM_HIGH_WATER_MARK),
+  });
+  const stream = client.query(qStream);
+
   stream.on('end', () => release());
   stream.on('error', (streamErr) => release(streamErr));
   stream.on('close', () => release());
 
-  StreamingService.streamResponse(
-    res,
-    stream,
-    format,
-    wbObject,
-    pageOptions,
-    appendDocumentQuery,
-  );
+  try {
+    StreamingService.streamResponse(
+      res,
+      stream,
+      format,
+      wbObject,
+      pageOptions,
+      appendDocumentQuery,
+    );
+  } catch (err) {
+    // pipeline() throws synchronously if the response closed since the check above
+    stream.destroy();
+    release(err);
+    throw err;
+  }
 }
 
 /**
