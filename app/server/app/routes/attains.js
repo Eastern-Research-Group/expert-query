@@ -207,7 +207,7 @@ function createLatestSubquery(req, profile, params, columnName, columnType) {
  * @param {Object} pageOptions page number and page size for paginated JSON
  * @param {boolean} appendDocumentQuery append the configured query string to document URLs
  */
-async function createStream(
+export async function createStream(
   query,
   res,
   format,
