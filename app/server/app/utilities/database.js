@@ -33,6 +33,12 @@ log.info(
   `STREAM_HIGH_WATER_MARK: ${parseInt(process.env.STREAM_HIGH_WATER_MARK)}`,
 );
 log.info(`MAX_QUERY_SIZE: ${parseInt(process.env.MAX_QUERY_SIZE)}`);
+log.info(`DB_CONNECTION_TIMEOUT: ${process.env.DB_CONNECTION_TIMEOUT}`);
+log.info(`DB_STATEMENT_TIMEOUT: ${process.env.DB_STATEMENT_TIMEOUT}`);
+log.info(
+  `DB_IDLE_IN_TRANSACTION_TIMEOUT: ${process.env.DB_IDLE_IN_TRANSACTION_TIMEOUT}`,
+);
+log.info(`STREAM_IDLE_TIMEOUT: ${process.env.STREAM_IDLE_TIMEOUT}`);
 
 // Setup parsers for ensuring output matches datatype in database
 // (i.e., return count as 124 instead of "124")
