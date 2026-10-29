@@ -12,10 +12,11 @@ async function loadCreateStream({ streamResponseImpl } = {}) {
   const stream = new EventEmitter();
   stream.destroy = jest.fn();
 
-  const client = {
+  // the client is an EventEmitter: createStream attaches client.on('error')
+  const client = Object.assign(new EventEmitter(), {
     query: jest.fn().mockReturnValue(stream),
     release: jest.fn(),
-  };
+  });
 
   const pool = { connect: jest.fn().mockResolvedValue(client) };
   const streamResponse = jest.fn(streamResponseImpl);
@@ -167,5 +168,31 @@ describe('createStream connection lifecycle', () => {
 
     expect(client.release).toHaveBeenCalledTimes(1);
     expect(client.release).toHaveBeenCalledWith(streamErr);
+  });
+
+  test('releases with the error when the client emits a connection error', async () => {
+    const { createStream, client } = await loadCreateStream();
+    const res = { closed: false, destroyed: false };
+
+    await run(createStream, res);
+
+    // a terminated backend with a suspended cursor errors on the client, not
+    // the stream; the listener must catch it so Node does not re-throw it
+    const clientErr = new Error('terminating connection due to administrator command');
+    client.emit('error', clientErr);
+
+    expect(client.release).toHaveBeenCalledTimes(1);
+    expect(client.release).toHaveBeenCalledWith(clientErr);
+  });
+
+  test('removes the client error listener on release so it does not pile up across checkouts', async () => {
+    const { createStream, client, stream } = await loadCreateStream();
+    const res = { closed: false, destroyed: false };
+
+    await run(createStream, res);
+    expect(client.listenerCount('error')).toBe(1);
+
+    stream.emit('end');
+    expect(client.listenerCount('error')).toBe(0);
   });
 });

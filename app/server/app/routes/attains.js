@@ -219,16 +219,23 @@ export async function createStream(
   // handler instead of throwing from a callback the request can no longer see
   const client = await pool.connect();
 
-  // release the pooled client exactly once, however the stream finishes.
-  // pg-pool throws on a double release and these events can fire in
-  // combination. Passing the error tells pg to discard a connection that was
-  // left in a bad state instead of returning it to the pool.
+  // Release the pooled client exactly once, however the stream finishes.
+  // `pg-pool` throws on a double release and these events can fire in combination.
+  // Passing the error tells pg to discard a bad connection rather than pool it.
   let released = false;
-  const release = (streamErr) => {
+  let release;
+  const onClientError = (clientErr) => release(clientErr);
+  release = (streamErr) => {
     if (released) return;
     released = true;
+    // pooled clients are reused; drop the listener or it piles up per checkout
+    client.removeListener('error', onClientError);
     client.release(streamErr);
   };
+
+  // a connection error with no in-flight query lands on the client, not the stream;
+  // catch it or Node re-throws the 'error' and crashes the process.
+  client.on('error', onClientError);
 
   // the response can close while the queries leading up to here are still running
   if (res.closed || res.destroyed) {
