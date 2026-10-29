@@ -196,3 +196,56 @@ describe('createStream connection lifecycle', () => {
     expect(client.listenerCount('error')).toBe(0);
   });
 });
+
+describe('createStream response idle timeout', () => {
+  const original = process.env.STREAM_IDLE_TIMEOUT;
+  afterEach(() => {
+    if (original === undefined) delete process.env.STREAM_IDLE_TIMEOUT;
+    else process.env.STREAM_IDLE_TIMEOUT = original;
+  });
+
+  function resWithTimeout() {
+    return {
+      closed: false,
+      destroyed: false,
+      setTimeout: jest.fn(),
+      destroy: jest.fn(),
+    };
+  }
+
+  test('does not arm a timeout when STREAM_IDLE_TIMEOUT is unset', async () => {
+    delete process.env.STREAM_IDLE_TIMEOUT;
+    const { createStream } = await loadCreateStream();
+    const res = resWithTimeout();
+
+    await run(createStream, res);
+
+    expect(res.setTimeout).not.toHaveBeenCalled();
+  });
+
+  test('arms the idle timeout and destroys the response when it fires', async () => {
+    process.env.STREAM_IDLE_TIMEOUT = '5000';
+    const { createStream } = await loadCreateStream();
+    const res = resWithTimeout();
+
+    await run(createStream, res);
+
+    expect(res.setTimeout).toHaveBeenCalledWith(5000, expect.any(Function));
+    // firing the timer (no write progress) abandons the response
+    const onIdle = res.setTimeout.mock.calls[0][1];
+    onIdle();
+    expect(res.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  test('clears the idle timeout on release so a reused socket is not affected', async () => {
+    process.env.STREAM_IDLE_TIMEOUT = '5000';
+    const { createStream, stream } = await loadCreateStream();
+    const res = resWithTimeout();
+
+    await run(createStream, res);
+    stream.emit('end');
+
+    // setTimeout(5000, fn) to arm, setTimeout(0) to clear
+    expect(res.setTimeout).toHaveBeenCalledWith(0);
+  });
+});

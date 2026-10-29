@@ -219,6 +219,9 @@ export async function createStream(
   // handler instead of throwing from a callback the request can no longer see
   const client = await pool.connect();
 
+  // ms of no write progress before the response is abandoned
+  const idleTimeout = Number.parseInt(process.env.STREAM_IDLE_TIMEOUT);
+
   // Release the pooled client exactly once, however the stream finishes.
   // `pg-pool` throws on a double release and these events can fire in combination.
   // Passing the error tells pg to discard a bad connection rather than pool it.
@@ -230,6 +233,7 @@ export async function createStream(
     released = true;
     // pooled clients are reused; drop the listener or it piles up per checkout
     client.removeListener('error', onClientError);
+    if (idleTimeout > 0) res.setTimeout(0);
     client.release(streamErr);
   };
 
@@ -242,6 +246,10 @@ export async function createStream(
     release();
     return;
   }
+
+  // abandon the response after idleTimeout ms of no write progress; destroying it
+  // runs the teardown below and releases the client.
+  if (idleTimeout > 0) res.setTimeout(idleTimeout, () => res.destroy());
 
   const qStream = new QueryStream(query.toString(), [], {
     batchSize: parseInt(process.env.STREAM_BATCH_SIZE),
