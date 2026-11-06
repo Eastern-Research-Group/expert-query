@@ -22,7 +22,8 @@
     "start_coverage": "nyc --silent node --env-file=./.env.local app/server.js",
     "lint": "eslint .",
     "test": "npx rimraf .nyc_output/out.json && npx rimraf coverage && node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --coverageDirectory=coverage",
-    "test:resilience": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.resilience.config.js"
+    "test:resilience": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.resilience.config.js",
+    "test:resilience:coverage": "npx rimraf coverage-resilience && node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.resilience.config.js --coverage --coverageDirectory=coverage-resilience"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1151.0",

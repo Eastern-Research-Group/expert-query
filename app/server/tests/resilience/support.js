@@ -1,18 +1,38 @@
-// Shared setup for the resilience tests: a raw unread-socket stall and a cheap
-// pool-backed probe, both driving the local server over plain TCP/HTTP.
+// Shared setup for the resilience tests: boot the app in-process on an ephemeral
+// port, then drive it with a raw unread-socket stall and a cheap pool-backed
+// probe over plain TCP/HTTP.
 import net from 'node:net';
+import app from '../../app/app.js';
+import { pool } from '../../app/utilities/database.js';
 
-// These tests drive the app directly, never BrowserSync or any
-// other proxy, so they don't read SERVER_URL.
-const PORT = Number(process.env.PORT) || 3001;
-const HOST = 'localhost';
-const BASE_URL = `http://${HOST}:${PORT}`;
-export { HOST, PORT, BASE_URL };
+export const HOST = 'localhost';
 export const POOL_MAX = Number.parseInt(process.env.DB_POOL_MAX, 10) || 10;
 export const IDLE =
   Number.parseInt(process.env.STREAM_IDLE_TIMEOUT, 10) || 10000;
 
 export const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Start the app on an ephemeral port. Returns { server, port, baseUrl }.
+export function startApp() {
+  return new Promise((resolve, reject) => {
+    const server = app.listen(0, () => {
+      const { port } = server.address();
+      resolve({ server, port, baseUrl: `http://${HOST}:${port}` });
+    });
+    server.once('error', reject);
+  });
+}
+
+// Stop the app and end the DB pool so the process has no open handles left.
+// closeAllConnections forces any lingering keep-alive sockets shut so close
+// resolves promptly.
+export async function stopApp(server) {
+  await new Promise((resolve) => {
+    server.close(() => resolve());
+    server.closeAllConnections?.();
+  });
+  await pool.end();
+}
 
 // Three states * all columns is tens of MB, far past the socket buffers, so a
 // client that never reads blocks the server mid-stream and the cursor stays
@@ -85,20 +105,23 @@ const stallBody = JSON.stringify({
   ],
 });
 
-const stallRequest =
-  'POST /api/attains/assessments HTTP/1.1\r\n' +
-  `Host: ${HOST}:${PORT}\r\n` +
-  'Content-Type: application/json\r\n' +
-  `Content-Length: ${Buffer.byteLength(stallBody)}\r\n` +
-  '\r\n' +
-  stallBody;
+function stallRequest(port) {
+  return (
+    'POST /api/attains/assessments HTTP/1.1\r\n' +
+    `Host: ${HOST}:${port}\r\n` +
+    'Content-Type: application/json\r\n' +
+    `Content-Length: ${Buffer.byteLength(stallBody)}\r\n` +
+    '\r\n' +
+    stallBody
+  );
+}
 
 // A cheap, pool-backed request; blocks (and so returns false) while the pool is
-// exhausted, succeeds once a client is freed
-export async function poolQuerySucceeds(timeoutMs) {
+// exhausted, succeeds once a client is freed.
+export async function poolQuerySucceeds(baseUrl, timeoutMs) {
   try {
     const res = await fetch(
-      `${BASE_URL}/api/attains/sources/count?confirmed=Y&format=tsv`,
+      `${baseUrl}/api/attains/sources/count?confirmed=Y&format=tsv`,
       { signal: AbortSignal.timeout(timeoutMs) },
     );
     return res.status === 200;
@@ -111,8 +134,8 @@ export async function poolQuerySucceeds(timeoutMs) {
 // socket backs up, the server blocks writing, and its pooled client stays held.
 // Returns the socket so the caller can tear it down (destroy, or resetAndDestroy
 // for an abrupt RST).
-export function startStall() {
-  const socket = net.connect(PORT, HOST, () => socket.write(stallRequest));
+export function startStall(port) {
+  const socket = net.connect(port, HOST, () => socket.write(stallRequest(port)));
   socket.on('error', () => {}); // Ignore the reset when the server tears us down
   return socket;
 }
