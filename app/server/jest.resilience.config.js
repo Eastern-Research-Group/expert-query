@@ -1,8 +1,9 @@
-// Resilience lane: separate roots + plain node env; never runs in `npm test`.
+// Resilience lane: inherits the main suite's Allure reporting and setup. Never runs in `npm test`.
+import base from './jest.config.js';
+
 export default {
-  setupFiles: ['./jest_setup.js'],
+  ...base,
   roots: ['tests/resilience'],
-  testEnvironment: 'node',
-  maxWorkers: 1, // each test exhausts the pool; run them serially, not in parallel
-  transform: {},
+  maxWorkers: 1, // kept separate from the parallel main suite: each test exhausts the pool, so they run serially
+  testPathIgnorePatterns: ['node_modules/', 'dist/', 'build/'],
 };

@@ -5,8 +5,10 @@ Opt-in tests that exercise the server under adverse client and network behavior
 degrades gracefully and reclaims resources (connections, pooled DB clients,
 memory) rather than leaking or crashing.
 
-They boot the app in-process and drive it over real TCP, so they are **excluded
-from `npm test`** and run only via `npm run test:resilience`.
+Each test exhausts the pool, so they run serially and are kept out of the
+parallel main suite. They are **excluded from `npm test`** and run only via
+`npm run test:resilience`. Coverage and Allure results still combine into the
+final report.
 
 Everything here drives the **local app over HTTP only**. Never point it at a
 deployed or shared environment.
