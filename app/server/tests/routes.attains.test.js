@@ -83,6 +83,17 @@ function run(createStream, res) {
   return createStream(query, res, 'json', null, pageOptions, false);
 }
 
+// stands in for an http.ServerResponse
+function makeRes(overrides = {}) {
+  return {
+    closed: false,
+    destroyed: false,
+    setTimeout: jest.fn(),
+    destroy: jest.fn(),
+    ...overrides,
+  };
+}
+
 afterEach(() => {
   jest.restoreAllMocks();
   jest.resetModules();
@@ -92,7 +103,7 @@ describe('createStream connection lifecycle', () => {
   test('releases the client once when the stream ends normally', async () => {
     const { createStream, client, stream, streamResponse } =
       await loadCreateStream();
-    const res = { closed: false, destroyed: false };
+    const res = makeRes();
 
     await run(createStream, res);
 
@@ -112,7 +123,7 @@ describe('createStream connection lifecycle', () => {
 
   test('returns the client clean and issues no query when res.closed is already true', async () => {
     const { createStream, client, streamResponse } = await loadCreateStream();
-    const res = { closed: true, destroyed: false };
+    const res = makeRes({ closed: true });
 
     await run(createStream, res);
 
@@ -125,7 +136,7 @@ describe('createStream connection lifecycle', () => {
 
   test('returns the client clean when res.destroyed is already true', async () => {
     const { createStream, client, streamResponse } = await loadCreateStream();
-    const res = { closed: false, destroyed: true };
+    const res = makeRes({ destroyed: true });
 
     await run(createStream, res);
 
@@ -144,7 +155,7 @@ describe('createStream connection lifecycle', () => {
         throw pipeErr;
       },
     });
-    const res = { closed: false, destroyed: false };
+    const res = makeRes();
 
     // pipeline() throws synchronously when the response closed after the guard;
     // createStream must tear down the cursor and release with the error so pg
@@ -158,7 +169,7 @@ describe('createStream connection lifecycle', () => {
 
   test('releases with the error on a stream error and ignores the trailing close', async () => {
     const { createStream, client, stream } = await loadCreateStream();
-    const res = { closed: false, destroyed: false };
+    const res = makeRes();
 
     await run(createStream, res);
 
@@ -172,13 +183,15 @@ describe('createStream connection lifecycle', () => {
 
   test('releases with the error when the client emits a connection error', async () => {
     const { createStream, client } = await loadCreateStream();
-    const res = { closed: false, destroyed: false };
+    const res = makeRes();
 
     await run(createStream, res);
 
     // a terminated backend with a suspended cursor errors on the client, not
     // the stream; the listener must catch it so Node does not re-throw it
-    const clientErr = new Error('terminating connection due to administrator command');
+    const clientErr = new Error(
+      'terminating connection due to administrator command',
+    );
     client.emit('error', clientErr);
 
     expect(client.release).toHaveBeenCalledTimes(1);
@@ -187,7 +200,7 @@ describe('createStream connection lifecycle', () => {
 
   test('removes the client error listener on release so it does not pile up across checkouts', async () => {
     const { createStream, client, stream } = await loadCreateStream();
-    const res = { closed: false, destroyed: false };
+    const res = makeRes();
 
     await run(createStream, res);
     expect(client.listenerCount('error')).toBe(1);
@@ -204,19 +217,10 @@ describe('createStream response idle timeout', () => {
     else process.env.STREAM_IDLE_TIMEOUT = original;
   });
 
-  function resWithTimeout() {
-    return {
-      closed: false,
-      destroyed: false,
-      setTimeout: jest.fn(),
-      destroy: jest.fn(),
-    };
-  }
-
   test('does not arm a timeout when STREAM_IDLE_TIMEOUT is unset', async () => {
     delete process.env.STREAM_IDLE_TIMEOUT;
     const { createStream } = await loadCreateStream();
-    const res = resWithTimeout();
+    const res = makeRes();
 
     await run(createStream, res);
 
@@ -226,7 +230,7 @@ describe('createStream response idle timeout', () => {
   test('arms the idle timeout and destroys the response when it fires', async () => {
     process.env.STREAM_IDLE_TIMEOUT = '5000';
     const { createStream } = await loadCreateStream();
-    const res = resWithTimeout();
+    const res = makeRes();
 
     await run(createStream, res);
 
@@ -240,7 +244,7 @@ describe('createStream response idle timeout', () => {
   test('clears the idle timeout on release so a reused socket is not affected', async () => {
     process.env.STREAM_IDLE_TIMEOUT = '5000';
     const { createStream, stream } = await loadCreateStream();
-    const res = resWithTimeout();
+    const res = makeRes();
 
     await run(createStream, res);
     stream.emit('end');
