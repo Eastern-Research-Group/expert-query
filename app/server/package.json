@@ -1,6 +1,6 @@
 {
   "name": "expert-query-server",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "U.S. EPA Expert Query (server app)",
   "keywords": [
     "Expert Query",
